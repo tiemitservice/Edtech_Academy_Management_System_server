@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000" # Changed to match your PORT=5000 in .env
+    environment:
+      - DB_URL2=mongodb://mongodb:27017/test
+      - PORT=5000
+      - JWT_SECRET=tiemit@168
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
