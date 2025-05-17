@@ -80,6 +80,20 @@ const register = async (req, res) => {
     }
 };
 
+// create a new user
+
+const createUser = async (req, res) => {
+    try {
+        const { name, email, password, role, phoneNumber } = req.body;
+        const hashedPassword = await hashPassword(password);
+        const user = new User({ name, email, password: hashedPassword, role, phoneNumber });
+        await user.save();
+        res.status(201).json({ message: 'User created successfully.' });
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'An error occurred while creating the user.' });
+    }
+};
 
 /**
  * Login user and generate JWT
@@ -331,6 +345,26 @@ const forgetPassword = async (req, res) => {
     }
 };
 
+// delete user
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ error: "User ID is required." });
+        }
+
+        const user = await User.findByIdAndDelete(id);
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        res.status(200).json({ message: "User deleted successfully." });
+    } catch (err) {
+        console.error("Delete user error:", err.message || err);
+        res.status(500).json({ error: "An error occurred while deleting the user." });
+    }
+};
 
 
-module.exports = { register, login, logout, forgetPassword, resetPassword, sendResetEmail };
+module.exports = { register, login, logout, forgetPassword, resetPassword, sendResetEmail, createUser, deleteUser };

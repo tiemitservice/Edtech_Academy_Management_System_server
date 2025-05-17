@@ -10,6 +10,11 @@ const studentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    teacher: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff',
+        required: false
+    }],
 
     gender: {
         type: String,
@@ -58,6 +63,19 @@ const studentSchema = new mongoose.Schema({
         type: Number,
         required: false,
         default: 0,
+    },
+    attendence_date: {
+        type: Date,
+        required: false,
+    },
+    total_attendance_score: {
+        type: Number,
+        required: false,
+        default: 0
+    },
+    attendence_enum: {
+        type: String, // present, absent, late
+        required: false,
     },
     rental_book: [{
         type: mongoose.Schema.Types.ObjectId,

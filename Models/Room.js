@@ -38,7 +38,11 @@ const roomSchema = new mongoose.Schema({
         type: Boolean,
         // approve booking 
         default: false
-    }
+    },
+    duration: {
+        type: String,
+        required: false,
+    },
 }, { timestamps: true });
 
 const Room = mongoose.model('Room', roomSchema);

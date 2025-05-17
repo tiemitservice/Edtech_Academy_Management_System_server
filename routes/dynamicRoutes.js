@@ -3,7 +3,7 @@ const dynamicCrudController = require('../Controller/DynamicController');
 const router = express.Router();
 
 // Define collections to handle
-const collections = ['users', "staffs", "books", "book_categories", "students", "classes", "cours", "sections", "departments", "positions", "rooms"];
+const collections = ['users', "staffs", "books", "book_categories", "students", "classes", "cours", "sections", "departments", "positions", "rooms", "attendances"];
 
 collections.forEach((collection) => {
     const controller = dynamicCrudController(collection);

@@ -4,6 +4,7 @@ const staffSchema = new mongoose.Schema({
     kh_name: { type: String, required: true },
     en_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    workday: { type: Array, required: false },
     gender: { type: String, required: true },
     phoneNumber: { type: String, required: true, unique: true },
     role: { type: String, required: true },
