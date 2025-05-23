@@ -1,76 +1,74 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const dynamicRoute = require('./routes/dynamicRoutes');
-const authRoute = require('./routes/userRoutes');
-const currentRoute = require('./Auth/currentUserRoute');
-const cors = require('cors');
-const http = require('http');
-const socketIo = require('socket.io');
-const fs = require('fs');
-const path = require('path'); // Built-in Node.js module
-// Load environment variables
-require('./Controller/Cron');
-
-dotenv.config();
-
+// server.js
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const dynamicRoute = require("./routes/dynamicRoutes");
+const authRoute = require("./Auth/authenticateUser");
+const currentRoute = require("./Auth/currentUserRoute"); // Corrected typo
+const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+const path = require("path");
+require("./Controller/Cron");
 // Initialize express app
+dotenv.config();
 const app = express();
-const server = http.createServer(app); // Create an HTTP server using Express
-const io = socketIo(server); // Initialize Socket.IO with the HTTP server
+const server = http.createServer(app);
 
-app.use(cors()); // Allow all origins or configure as needed
-
-// Middleware to parse JSON
-app.use(express.json());
-
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-    .then(() => console.log('MongoDB connected'))
-    .catch((err) => console.log('MongoDB connection error:', err));
-
-// Simple GET route for '/'
-app.get('/', (req, res) => {
-    res.send('Hello World');
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // Match your Vue.js frontend
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+  },
 });
 
-// Use user routes
-app.use('/api', dynamicRoute);
-app.use('/api', authRoute);
-app.use('/api', currentRoute);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Attach io to app for use in controllers
+app.set("io", io);
 
-// Set up Socket.IO events
-io.on('connection', (socket) => {
-    console.log('A user connected');
+// Middleware
+app.use(cors({ origin: "http://localhost:5173" })); // Match frontend origin
+app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 
-    // Listen for custom events from clients (create, update for any model)
-    socket.on('createModel', (modelName, data) => {
-        console.log(`${modelName} created:`, data);
-        // Broadcast to all clients that a model has been created
-        io.emit(`${modelName}Created`, { message: `${modelName} created!`, data });
-    });
+// MongoDB connection
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log("MongoDB connection error:", err));
 
-    socket.on('updateModel', (modelName, data) => {
-        console.log(`${modelName} updated:`, data);
-        // Broadcast to all clients that a model has been updated
-        io.emit(`${modelName}Updated`, { message: `${modelName} updated!`, data });
-    });
+// Routes
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
+app.use("/api", dynamicRoute);
+app.use("/api", authRoute);
+app.use("/api", currentRoute);
 
-    // Handle disconnect
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
+// Socket.IO connection
+io.on("connection", (socket) => {
+  console.log("New client connected:", socket.id);
+
+  socket.on("join-room", (collection) => {
+    console.log(`Client joined room: ${collection}`);
+    socket.join(collection);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+
+  socket.on("send-message", (message) => {
+    console.log("Message received:", message);
+    io.emit("receive-message", message);
+  });
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-
-
-

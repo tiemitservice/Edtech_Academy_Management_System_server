@@ -4,8 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js",
-    "prod": "node server.js"
+    "start": "nodemon server.js",
+    "socket": "nodemon src/socket.js",
+    "client": "nodemon src/client.js"
   },
   "keywords": [],
   "author": "",
@@ -24,10 +25,14 @@
     "mongoose": "^8.9.2",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
-    "node-cron": "^4.0.5",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.9",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }
