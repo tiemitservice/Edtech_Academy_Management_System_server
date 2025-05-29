@@ -10,6 +10,10 @@ const studentPermissionSchema = new mongoose.Schema({
     ref: "Staff",
     required: true,
   },
+  student_id: {
+    type: String,
+    required: true,
+  },
   reason: {
     type: String,
     required: true,

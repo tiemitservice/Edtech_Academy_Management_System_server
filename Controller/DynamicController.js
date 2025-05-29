@@ -16,6 +16,7 @@ const Position = require("../Models/Posistion");
 const Attendance = require("../Models/Attendace");
 const StudentCategory = require("../Models/StudentCategory");
 const StudentPermission = require("../Models/StudentPermission");
+const StudentPayment = require("../Models/StudentPayment");
 const loadModel = (collection) => {
   switch (collection.toLowerCase()) {
     case "users":
@@ -46,6 +47,8 @@ const loadModel = (collection) => {
       return StudentCategory;
     case "student_permissions":
       return StudentPermission;
+    case "student_payments":
+      return StudentPayment;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
@@ -168,7 +171,8 @@ const dynamicCrudController = (collection) => {
             } else {
               queryConditions.push({ [key]: value });
             }
-          } else if (key === "studentId") {
+          }
+          if (key === "studentId") {
             if (!mongoose.Types.ObjectId.isValid(value)) {
               console.error(`Invalid studentId: ${value}`);
               continue;
@@ -183,6 +187,8 @@ const dynamicCrudController = (collection) => {
           } else if (mongoose.Types.ObjectId.isValid(value)) {
             queryConditions.push({ [key]: new mongoose.Types.ObjectId(value) });
           } else if (typeof value === "string") {
+            queryConditions.push({ [key]: { $regex: value, $options: "i" } });
+          } else if (value === "email") {
             queryConditions.push({ [key]: { $regex: value, $options: "i" } });
           } else {
             queryConditions.push({ [key]: value });
@@ -293,9 +299,6 @@ const dynamicCrudController = (collection) => {
               break;
             // id only
             case "student_permissions":
-              query
-                .populate({ path: "studentId", select: "_id" }) // Populate only _id
-                .populate({ path: "sent_to", select: "_id" }); // Populate only _id
               break;
           }
 

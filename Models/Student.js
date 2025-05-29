@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const studentSchema = new mongoose.Schema(
   {
@@ -96,6 +97,8 @@ const studentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+// Apply the auto-increment plugin to student_id field
+studentSchema.plugin(AutoIncrement, { inc_field: "student_id" });
 
 const Student = mongoose.model("Student", studentSchema);
 

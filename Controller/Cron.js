@@ -22,6 +22,6 @@ cron.schedule(
   },
   {
     scheduled: true,
-    timezone: "Asia/Bangkok", // Match your system timezone (+07:00)
+    timezone: "Asia/Bangkok",
   }
 );

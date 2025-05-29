@@ -3,7 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const dynamicRoute = require("./routes/dynamicRoutes");
-const authRoute = require("./Auth/authenticateUser");
+const autheRouter = require("./routes/userRoutes");
 const currentRoute = require("./Auth/currentUserRoute"); // Corrected typo
 const cors = require("cors");
 const http = require("http");
@@ -45,7 +45,7 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 app.use("/api", dynamicRoute);
-app.use("/api", authRoute);
+app.use("/api", autheRouter);
 app.use("/api", currentRoute);
 
 // Socket.IO connection

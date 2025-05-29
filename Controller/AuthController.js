@@ -90,7 +90,7 @@ const register = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, phoneNumber } = req.body;
+    const { name, email, password, role, phoneNumber, token } = req.body;
     const hashedPassword = await hashPassword(password);
     const user = new User({
       name,
@@ -98,6 +98,7 @@ const createUser = async (req, res) => {
       password: hashedPassword,
       role,
       phoneNumber,
+      token,
     });
     await user.save();
     res.status(201).json({ message: "User created successfully." });
