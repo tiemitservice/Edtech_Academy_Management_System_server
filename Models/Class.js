@@ -1,33 +1,40 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const classSchema = new mongoose.Schema({
+const classSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     is_active: {
-        type: Boolean,
-        default: true
+      type: Boolean,
+      default: true,
     },
-    students: [{
+    students: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
-    }],
+        ref: "Student",
+      },
+    ],
     staff: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Staff'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
     },
     room: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Room'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
     },
     status: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
+    day_class: {
+      type: Array,
+    },
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true });
-
-const Class = mongoose.model('Class', classSchema);
+const Class = mongoose.model("Class", classSchema);
 
 module.exports = Class;

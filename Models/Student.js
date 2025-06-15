@@ -65,6 +65,21 @@ const studentSchema = new mongoose.Schema(
       required: false,
       default: 0,
     },
+    midterm_score: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    final_score: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    quiz_score: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
     attendence: {
       type: Number,
       required: false,
@@ -93,6 +108,24 @@ const studentSchema = new mongoose.Schema(
     status: {
       type: Boolean,
       default: true,
+    },
+    score_status: {
+      type: String,
+    },
+    old_final_score: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    old_midterm_score: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    old_quiz_score: {
+      type: Number,
+      required: false,
+      default: 0,
     },
   },
   { timestamps: true }

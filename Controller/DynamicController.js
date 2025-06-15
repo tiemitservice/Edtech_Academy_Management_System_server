@@ -366,6 +366,57 @@ const dynamicCrudController = (collection) => {
             updatedData.score = parseInt(req.body.score) || 0;
             updatedData.attendance = parseInt(req.body.attendance) || 0;
           }
+          // Handle attendance score updates
+          if (collection.toLowerCase() === "students") {
+            const attendanceRecord = await model.findById(req.params.id);
+            if (!attendanceRecord) {
+              return res.status(404).json({ error: "Attendance not found" });
+            }
+
+            const scoreStatus = req.body.score_status || "insert_more";
+
+            const incomingScore = {
+              quiz_score: Number(req.body.quiz_score) || 0,
+              midterm_score: Number(req.body.midterm_score) || 0,
+              final_score: Number(req.body.final_score) || 0,
+            };
+
+            if (scoreStatus === "insert_more") {
+              updatedData.quiz_score =
+                (attendanceRecord.quiz_score || 0) + incomingScore.quiz_score;
+              updatedData.midterm_score =
+                (attendanceRecord.midterm_score || 0) +
+                incomingScore.midterm_score;
+              updatedData.final_score =
+                (attendanceRecord.final_score || 0) + incomingScore.final_score;
+
+              updatedData.total_attendance_score =
+                (attendanceRecord.total_attendance_score || 0) +
+                incomingScore.quiz_score +
+                incomingScore.midterm_score +
+                incomingScore.final_score;
+            } else if (scoreStatus === "replace") {
+              // Get old scores
+              const oldQuiz = Number(req.body.old_quiz_score) || 0;
+              const oldMidterm = Number(req.body.old_midterm_score) || 0;
+              const oldFinal = Number(req.body.old_final_score) || 0;
+
+              updatedData.quiz_score = incomingScore.quiz_score;
+              updatedData.midterm_score = incomingScore.midterm_score;
+              updatedData.final_score = incomingScore.final_score;
+
+              updatedData.total_attendance_score =
+                (attendanceRecord.total_attendance_score || 0) -
+                oldQuiz -
+                oldMidterm -
+                oldFinal +
+                incomingScore.quiz_score +
+                incomingScore.midterm_score +
+                incomingScore.final_score;
+            }
+
+            delete updatedData.score_status;
+          }
 
           const updatedItem = await model.findByIdAndUpdate(
             req.params.id,
