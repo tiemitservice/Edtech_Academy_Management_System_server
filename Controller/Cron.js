@@ -3,7 +3,7 @@ const cron = require("node-cron");
 
 // Every minute (for testing), with timezone
 cron.schedule(
-  "* * * * *",
+  "0 */3 * * *",
   async () => {
     console.log("Resetting all student attendance...");
     try {
