@@ -31,6 +31,10 @@ const classSchema = new mongoose.Schema(
     day_class: {
       type: Array,
     },
+    duration: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Section",
+    },
   },
   { timestamps: true }
 );

@@ -7,11 +7,15 @@ const sectionSchema = new mongoose.Schema(
       type: Number,
       unique: true,
     },
-    start_time: {
-      type: String,
-      required: true,
-    },
-    end_time: {
+    // start_time: {
+    //   type: String,
+    //   required: true,
+    // },
+    // end_time: {
+    //   type: String,
+    //   required: true,
+    // },
+    duration: {
       type: String,
       required: true,
     },

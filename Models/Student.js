@@ -31,6 +31,22 @@ const studentSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    province: {
+      type: String,
+      required: false,
+    },
+    district: {
+      type: String,
+      required: false,
+    },
+    commune: {
+      type: String,
+      required: false,
+    },
+    village: {
+      type: String,
+      required: false,
+    },
     email: {
       type: String,
       required: false,
@@ -44,6 +60,19 @@ const studentSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    document_type: {
+      type: String,
+      required: false,
+    },
+    document_number: {
+      type: String,
+      required: false,
+    },
+    document_image: {
+      type: String,
+      required: false,
+    },
+
     address: {
       type: String,
       required: false,

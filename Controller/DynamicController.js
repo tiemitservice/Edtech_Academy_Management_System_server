@@ -1,5 +1,3 @@
-// dynamicCrudController.js
-
 const upload = require("../upload/upload");
 const mongoose = require("mongoose");
 const User = require("../Models/User");
@@ -17,6 +15,20 @@ const Attendance = require("../Models/Attendace");
 const StudentCategory = require("../Models/StudentCategory");
 const StudentPermission = require("../Models/StudentPermission");
 const StudentPayment = require("../Models/StudentPayment");
+
+const getImageFields = (schema) => {
+  const imageFields = [];
+  for (const [fieldName, field] of Object.entries(schema.paths)) {
+    if (
+      field.instance === "String" &&
+      (fieldName === "image" || fieldName === "document_image")
+    ) {
+      imageFields.push(fieldName);
+    }
+  }
+  return imageFields;
+};
+
 const loadModel = (collection) => {
   switch (collection.toLowerCase()) {
     case "users":
@@ -55,75 +67,174 @@ const loadModel = (collection) => {
   }
 };
 
+const deletionDependencies = {
+  staffs: [
+    { model: Class, field: "staff" },
+    { model: Class, field: "staff._id" },
+  ],
+  classes: [
+    { model: Staff, field: "staff._id" },
+    { model: Section, field: "duration" },
+  ],
+  books: [{ model: Student, field: "rental_book" }],
+  students: [
+    { model: Class, field: "students" },
+    { model: Class, field: "students._id" },
+    { model: Attendance, field: "student_id" },
+  ],
+  positions: [{ model: Staff, field: "position" }],
+  departments: [{ model: Staff, field: "department" }],
+  book_categories: [{ model: Book, field: "bookType" }],
+  rooms: [{ model: Class, field: "room" }],
+};
+
 const dynamicCrudController = (collection) => {
   const model = loadModel(collection);
   if (!model) return null;
 
   return {
     create: async (req, res) => {
-      upload.single("image")(req, res, async (err) => {
-        if (err) {
-          // Send error response and return to prevent further execution
-          return res
-            .status(400)
-            .json({ error: "Image upload error", details: err.message });
+      try {
+        // Get image fields from the schema
+        const imageFields = getImageFields(model.schema);
+
+        // If no image fields, process without file upload
+        if (imageFields.length === 0) {
+          try {
+            if (!req.body.code) {
+              req.body.code = "default_code_" + Date.now();
+            }
+
+            const data = { ...req.body };
+
+            if (collection.toLowerCase() === "students") {
+              data.teacher = Array.isArray(req.body.teacher)
+                ? req.body.teacher
+                : req.body.teacher
+                ? [req.body.teacher]
+                : [];
+              data.teacher = data.teacher.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
+
+              data.rental_book = Array.isArray(req.body.rental_book)
+                ? req.body.rental_book
+                : req.body.rental_book
+                ? [req.body.rental_book]
+                : [];
+              data.rental_book = data.rental_book.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
+
+              data.status =
+                req.body.status === "true" || req.body.status === true;
+              data.score = parseInt(req.body.score) || 0;
+              data.attendance = parseInt(req.body.attendance) || 0;
+            }
+
+            const newItem = new model(data);
+            const savedItem = await newItem.save();
+
+            const io = req.app.get("io");
+            if (io) {
+              io.to(collection).emit(`${collection}_created`, savedItem);
+            } else {
+              console.error("Socket.IO instance not found");
+            }
+
+            return res.status(201).json(savedItem);
+          } catch (err) {
+            return res
+              .status(400)
+              .json({ error: "Create failed", details: err.message });
+          }
         }
 
-        try {
-          if (!req.body.code) {
-            req.body.code = "default_code_" + Date.now();
+        // Configure Multer for dynamic image fields
+        const uploadFields = imageFields.map((field) => ({
+          name: field,
+          maxCount: 1,
+        }));
+        upload.fields(uploadFields)(req, res, async (err) => {
+          if (err) {
+            return res
+              .status(400)
+              .json({ error: "Image upload error", details: err.message });
           }
 
-          const data = { ...req.body };
+          try {
+            if (!req.body.code) {
+              req.body.code = "default_code_" + Date.now();
+            }
 
-          if (collection.toLowerCase() === "students") {
-            data.teacher = Array.isArray(req.body.teacher)
-              ? req.body.teacher
-              : req.body.teacher
-              ? [req.body.teacher]
-              : [];
-            data.teacher = data.teacher.filter((id) =>
-              mongoose.Types.ObjectId.isValid(id)
-            );
+            // Clean req.body to remove invalid image fields
+            const data = { ...req.body };
+            imageFields.forEach((field) => {
+              if (data[field] && typeof data[field] === "object") {
+                delete data[field]; // Prevent validation errors
+              }
+            });
 
-            data.rental_book = Array.isArray(req.body.rental_book)
-              ? req.body.rental_book
-              : req.body.rental_book
-              ? [req.body.rental_book]
-              : [];
-            data.rental_book = data.rental_book.filter((id) =>
-              mongoose.Types.ObjectId.isValid(id)
-            );
+            if (collection.toLowerCase() === "students") {
+              data.teacher = Array.isArray(req.body.teacher)
+                ? req.body.teacher
+                : req.body.teacher
+                ? [req.body.teacher]
+                : [];
+              data.teacher = data.teacher.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
 
-            data.status =
-              req.body.status === "true" || req.body.status === true;
-            data.score = parseInt(req.body.score) || 0;
-            data.attendance = parseInt(req.body.attendance) || 0;
+              data.rental_book = Array.isArray(req.body.rental_book)
+                ? req.body.rental_book
+                : req.body.rental_book
+                ? [req.body.rental_book]
+                : [];
+              data.rental_book = data.rental_book.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
+
+              data.status =
+                req.body.status === "true" || req.body.status === true;
+              data.score = parseInt(req.body.score) || 0;
+              data.attendance = parseInt(req.body.attendance) || 0;
+            }
+
+            // Map uploaded file URLs to schema fields
+            const fileData = {};
+            if (req.files) {
+              imageFields.forEach((field) => {
+                fileData[field] = req.files[field]
+                  ? req.files[field][0].path
+                  : null;
+              });
+            }
+
+            const newItem = new model({
+              ...data,
+              ...fileData,
+            });
+            const savedItem = await newItem.save();
+
+            const io = req.app.get("io");
+            if (io) {
+              io.to(collection).emit(`${collection}_created`, savedItem);
+            } else {
+              console.error("Socket.IO instance not found");
+            }
+
+            return res.status(201).json(savedItem);
+          } catch (err) {
+            return res
+              .status(400)
+              .json({ error: "Create failed", details: err.message });
           }
-
-          const newItem = new model({
-            ...data,
-            image: req.file ? req.file.path : null,
-          });
-          const savedItem = await newItem.save();
-
-          // Emit Socket.IO event
-          const io = req.app.get("io");
-          if (io) {
-            io.to(collection).emit(`${collection}_created`, savedItem);
-          } else {
-            console.error("Socket.IO instance not found");
-          }
-
-          // Send success response
-          return res.status(201).json(savedItem);
-        } catch (err) {
-          // Send error response only if no response has been sent
-          return res
-            .status(400)
-            .json({ error: "Create failed", details: err.message });
-        }
-      });
+        });
+      } catch (err) {
+        return res
+          .status(500)
+          .json({ error: "Server error", details: err.message });
+      }
     },
 
     getAll: async (req, res) => {
@@ -144,7 +255,6 @@ const dynamicCrudController = (collection) => {
 
         const queryConditions = [];
 
-        // controllers/dynamicCrudController.js
         for (const [key, value] of Object.entries(filters)) {
           if (!value) continue;
 
@@ -277,7 +387,6 @@ const dynamicCrudController = (collection) => {
             case "classes":
               query
                 .populate("students")
-                .populate("staff")
                 .populate({ path: "room", populate: ["booked_by", "section"] });
               break;
             case "books":
@@ -297,7 +406,6 @@ const dynamicCrudController = (collection) => {
                 .populate("student_id", "eng_name")
                 .populate("set_by", "name");
               break;
-            // id only
             case "student_permissions":
               break;
           }
@@ -330,129 +438,274 @@ const dynamicCrudController = (collection) => {
     },
 
     getOne: async (req, res) => {},
+
     update: async (req, res) => {
-      upload.single("image")(req, res, async (err) => {
-        if (err) {
-          return res
-            .status(400)
-            .json({ error: "Image upload error", details: err.message });
-        }
+      try {
+        // Get image fields from the schema
+        const imageFields = getImageFields(model.schema);
 
-        try {
-          const updatedData = { ...req.body };
-          if (req.file) updatedData.image = req.file.path;
+        // If no image fields, process without file upload
+        if (imageFields.length === 0) {
+          try {
+            const updatedData = { ...req.body };
 
-          if (collection.toLowerCase() === "students") {
-            updatedData.teacher = Array.isArray(req.body.teacher)
-              ? req.body.teacher
-              : req.body.teacher
-              ? [req.body.teacher]
-              : [];
-            updatedData.teacher = updatedData.teacher.filter((id) =>
-              mongoose.Types.ObjectId.isValid(id)
-            );
+            if (collection.toLowerCase() === "students") {
+              updatedData.teacher = Array.isArray(req.body.teacher)
+                ? req.body.teacher
+                : req.body.teacher
+                ? [req.body.teacher]
+                : [];
+              updatedData.teacher = updatedData.teacher.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
 
-            updatedData.rental_book = Array.isArray(req.body.rental_book)
-              ? req.body.rental_book
-              : req.body.rental_book
-              ? [req.body.rental_book]
-              : [];
-            updatedData.rental_book = updatedData.rental_book.filter((id) =>
-              mongoose.Types.ObjectId.isValid(id)
-            );
+              updatedData.rental_book = Array.isArray(req.body.rental_book)
+                ? req.body.rental_book
+                : req.body.rental_book
+                ? [req.body.rental_book]
+                : [];
+              updatedData.rental_book = updatedData.rental_book.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
 
-            updatedData.status =
-              req.body.status === "true" || req.body.status === true;
-            updatedData.score = parseInt(req.body.score) || 0;
-            updatedData.attendance = parseInt(req.body.attendance) || 0;
-          }
-          // Handle attendance score updates
-          if (collection.toLowerCase() === "students") {
-            const attendanceRecord = await model.findById(req.params.id);
-            if (!attendanceRecord) {
-              return res.status(404).json({ error: "Attendance not found" });
+              updatedData.status =
+                req.body.status === "true" || req.body.status === true;
+              updatedData.score = parseInt(req.body.score) || 0;
+              updatedData.attendance = parseInt(req.body.attendance) || 0;
+
+              const attendanceRecord = await model.findById(req.params.id);
+              if (!attendanceRecord) {
+                return res.status(404).json({ error: "Attendance not found" });
+              }
+
+              const scoreStatus = req.body.score_status || "insert_more";
+              const incomingScore = {
+                quiz_score: Number(req.body.quiz_score) || 0,
+                midterm_score: Number(req.body.midterm_score) || 0,
+                final_score: Number(req.body.final_score) || 0,
+              };
+
+              if (scoreStatus === "insert_more") {
+                updatedData.quiz_score =
+                  (attendanceRecord.quiz_score || 0) + incomingScore.quiz_score;
+                updatedData.midterm_score =
+                  (attendanceRecord.midterm_score || 0) +
+                  incomingScore.midterm_score;
+                updatedData.final_score =
+                  (attendanceRecord.final_score || 0) +
+                  incomingScore.final_score;
+                updatedData.total_attendance_score =
+                  (attendanceRecord.total_attendance_score || 0) +
+                  incomingScore.quiz_score +
+                  incomingScore.midterm_score +
+                  incomingScore.final_score;
+              } else if (scoreStatus === "replace") {
+                const oldQuiz = Number(req.body.old_quiz_score) || 0;
+                const oldMidterm = Number(req.body.old_midterm_score) || 0;
+                const oldFinal = Number(req.body.old_final_score) || 0;
+
+                updatedData.quiz_score = incomingScore.quiz_score;
+                updatedData.midterm_score = incomingScore.midterm_score;
+                updatedData.final_score = incomingScore.final_score;
+                updatedData.total_attendance_score =
+                  (attendanceRecord.total_attendance_score || 0) -
+                  oldQuiz -
+                  oldMidterm -
+                  oldFinal +
+                  incomingScore.quiz_score +
+                  incomingScore.midterm_score +
+                  incomingScore.final_score;
+              }
+
+              delete updatedData.score_status;
             }
 
-            const scoreStatus = req.body.score_status || "insert_more";
+            const updatedItem = await model.findByIdAndUpdate(
+              req.params.id,
+              updatedData,
+              { new: true }
+            );
 
-            const incomingScore = {
-              quiz_score: Number(req.body.quiz_score) || 0,
-              midterm_score: Number(req.body.midterm_score) || 0,
-              final_score: Number(req.body.final_score) || 0,
-            };
-
-            if (scoreStatus === "insert_more") {
-              updatedData.quiz_score =
-                (attendanceRecord.quiz_score || 0) + incomingScore.quiz_score;
-              updatedData.midterm_score =
-                (attendanceRecord.midterm_score || 0) +
-                incomingScore.midterm_score;
-              updatedData.final_score =
-                (attendanceRecord.final_score || 0) + incomingScore.final_score;
-
-              updatedData.total_attendance_score =
-                (attendanceRecord.total_attendance_score || 0) +
-                incomingScore.quiz_score +
-                incomingScore.midterm_score +
-                incomingScore.final_score;
-            } else if (scoreStatus === "replace") {
-              // Get old scores
-              const oldQuiz = Number(req.body.old_quiz_score) || 0;
-              const oldMidterm = Number(req.body.old_midterm_score) || 0;
-              const oldFinal = Number(req.body.old_final_score) || 0;
-
-              updatedData.quiz_score = incomingScore.quiz_score;
-              updatedData.midterm_score = incomingScore.midterm_score;
-              updatedData.final_score = incomingScore.final_score;
-
-              updatedData.total_attendance_score =
-                (attendanceRecord.total_attendance_score || 0) -
-                oldQuiz -
-                oldMidterm -
-                oldFinal +
-                incomingScore.quiz_score +
-                incomingScore.midterm_score +
-                incomingScore.final_score;
+            if (!updatedItem) {
+              return res.status(404).json({ error: "Item not found" });
             }
 
-            delete updatedData.score_status;
+            const io = req.app.get("io");
+            if (io) {
+              io.to(collection).emit(`${collection}_updated`, updatedItem);
+            } else {
+              console.error("Socket.IO instance not found");
+            }
+
+            return res.status(200).json(updatedItem);
+          } catch (err) {
+            return res
+              .status(400)
+              .json({ error: "Update failed", details: err.message });
           }
-
-          const updatedItem = await model.findByIdAndUpdate(
-            req.params.id,
-            updatedData,
-            { new: true }
-          );
-
-          if (!updatedItem) {
-            return res.status(404).json({ error: "Item not found" });
-          }
-
-          // Emit Socket.IO event
-          const io = req.app.get("io");
-          if (io) {
-            io.to(collection).emit(`${collection}_updated`, updatedItem);
-          } else {
-            console.error("Socket.IO instance not found");
-          }
-
-          return res.status(200).json(updatedItem);
-        } catch (err) {
-          return res
-            .status(400)
-            .json({ error: "Update failed", details: err.message });
         }
-      });
+
+        // Configure Multer for dynamic image fields
+        const uploadFields = imageFields.map((field) => ({
+          name: field,
+          maxCount: 1,
+        }));
+        upload.fields(uploadFields)(req, res, async (err) => {
+          if (err) {
+            return res
+              .status(400)
+              .json({ error: "Image upload error", details: err.message });
+          }
+
+          try {
+            const updatedData = { ...req.body };
+
+            // Clean req.body to remove invalid image fields
+            imageFields.forEach((field) => {
+              if (
+                updatedData[field] &&
+                typeof updatedData[field] === "object"
+              ) {
+                delete updatedData[field]; // Prevent validation errors
+              }
+            });
+
+            // Map uploaded file URLs to schema fields
+            if (req.files) {
+              imageFields.forEach((field) => {
+                if (req.files[field]) {
+                  updatedData[field] = req.files[field][0].path;
+                }
+              });
+            }
+
+            if (collection.toLowerCase() === "students") {
+              updatedData.teacher = Array.isArray(req.body.teacher)
+                ? req.body.teacher
+                : req.body.teacher
+                ? [req.body.teacher]
+                : [];
+              updatedData.teacher = updatedData.teacher.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
+
+              updatedData.rental_book = Array.isArray(req.body.rental_book)
+                ? req.body.rental_book
+                : req.body.rental_book
+                ? [req.body.rental_book]
+                : [];
+              updatedData.rental_book = updatedData.rental_book.filter((id) =>
+                mongoose.Types.ObjectId.isValid(id)
+              );
+
+              updatedData.status =
+                req.body.status === "true" || req.body.status === true;
+              updatedData.score = parseInt(req.body.score) || 0;
+              updatedData.attendance = parseInt(req.body.attendance) || 0;
+
+              const attendanceRecord = await model.findById(req.params.id);
+              if (!attendanceRecord) {
+                return res.status(404).json({ error: "Attendance not found" });
+              }
+
+              const scoreStatus = req.body.score_status || "insert_more";
+              const incomingScore = {
+                quiz_score: Number(req.body.quiz_score) || 0,
+                midterm_score: Number(req.body.midterm_score) || 0,
+                final_score: Number(req.body.final_score) || 0,
+              };
+
+              if (scoreStatus === "insert_more") {
+                updatedData.quiz_score =
+                  (attendanceRecord.quiz_score || 0) + incomingScore.quiz_score;
+                updatedData.midterm_score =
+                  (attendanceRecord.midterm_score || 0) +
+                  incomingScore.midterm_score;
+                updatedData.final_score =
+                  (attendanceRecord.final_score || 0) +
+                  incomingScore.final_score;
+                updatedData.total_attendance_score =
+                  (attendanceRecord.total_attendance_score || 0) +
+                  incomingScore.quiz_score +
+                  incomingScore.midterm_score +
+                  incomingScore.final_score;
+              } else if (scoreStatus === "replace") {
+                const oldQuiz = Number(req.body.old_quiz_score) || 0;
+                const oldMidterm = Number(req.body.old_midterm_score) || 0;
+                const oldFinal = Number(req.body.old_final_score) || 0;
+
+                updatedData.quiz_score = incomingScore.quiz_score;
+                updatedData.midterm_score = incomingScore.midterm_score;
+                updatedData.final_score = incomingScore.final_score;
+                updatedData.total_attendance_score =
+                  (attendanceRecord.total_attendance_score || 0) -
+                  oldQuiz -
+                  oldMidterm -
+                  oldFinal +
+                  incomingScore.quiz_score +
+                  incomingScore.midterm_score +
+                  incomingScore.final_score;
+              }
+
+              delete updatedData.score_status;
+            }
+
+            const updatedItem = await model.findByIdAndUpdate(
+              req.params.id,
+              updatedData,
+              { new: true }
+            );
+
+            if (!updatedItem) {
+              return res.status(404).json({ error: "Item not found" });
+            }
+
+            const io = req.app.get("io");
+            if (io) {
+              io.to(collection).emit(`${collection}_updated`, updatedItem);
+            } else {
+              console.error("Socket.IO instance not found");
+            }
+
+            return res.status(200).json(updatedItem);
+          } catch (err) {
+            return res
+              .status(400)
+              .json({ error: "Update failed", details: err.message });
+          }
+        });
+      } catch (err) {
+        return res
+          .status(500)
+          .json({ error: "Server error", details: err.message });
+      }
     },
 
     delete: async (req, res) => {
       try {
-        const deletedItem = await model.findByIdAndDelete(req.params.id);
+        const itemId = req.params.id;
+
+        const deps = deletionDependencies[collection.toLowerCase()] || [];
+
+        for (const dep of deps) {
+          const query = {};
+          query[dep.field] = mongoose.Types.ObjectId(itemId);
+
+          const isReferenced = await dep.model.exists(query);
+          if (isReferenced) {
+            return res.status(400).json({
+              error: "Delete failed",
+              details: `Cannot delete ${collection} because it is referenced in ${dep.model.collection.name}`,
+            });
+          }
+        }
+
+        const deletedItem = await model.findByIdAndDelete(itemId);
+
         if (!deletedItem) {
           return res.status(404).json({ error: "Item not found" });
         }
 
-        // Emit Socket.IO event
         const io = req.app.get("io");
         if (io) {
           io.to(collection).emit(`${collection}_deleted`, deletedItem);
@@ -462,6 +715,7 @@ const dynamicCrudController = (collection) => {
 
         return res.status(200).json({ message: "Deleted successfully" });
       } catch (err) {
+        console.error("Delete error:", err);
         return res
           .status(400)
           .json({ error: "Delete failed", details: err.message });

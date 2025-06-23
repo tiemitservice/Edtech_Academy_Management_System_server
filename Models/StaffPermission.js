@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const staffPermissionSchema = new mongoose.Schema({
-  studentId: {
+  staff: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Staff",
     required: true,
