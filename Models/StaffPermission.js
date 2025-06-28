@@ -23,8 +23,9 @@ const staffPermissionSchema = new mongoose.Schema({
   },
   // true = accepted, false = rejected
   status: {
-    type: Boolean,
-    default: false,
+    type: String,
+    enum: ["accepted", "rejected", "pending"],
+    default: "pending",
   },
 });
 const staffPermission = mongoose.model(
