@@ -10,15 +10,21 @@ const staffPermissionSchema = new mongoose.Schema({
     required: true,
   },
   // array
-  start_date: [
+  hold_date: [
     {
-      type: String,
+      type: Array,
       required: true,
     },
   ],
+
   created_at: {
     type: Date,
     default: Date.now,
+  },
+  // true = accepted, false = rejected
+  status: {
+    type: Boolean,
+    default: false,
   },
 });
 const staffPermission = mongoose.model(

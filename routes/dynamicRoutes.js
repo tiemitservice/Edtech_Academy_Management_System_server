@@ -19,6 +19,7 @@ const collections = [
   "student_categories",
   "student_permissions",
   "student_payments",
+  "staffpermissions",
 ];
 
 collections.forEach((collection) => {

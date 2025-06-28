@@ -15,7 +15,7 @@ const Attendance = require("../Models/Attendace");
 const StudentCategory = require("../Models/StudentCategory");
 const StudentPermission = require("../Models/StudentPermission");
 const StudentPayment = require("../Models/StudentPayment");
-
+const StaffPermission = require("../Models/StaffPermission");
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
@@ -61,6 +61,8 @@ const loadModel = (collection) => {
       return StudentPermission;
     case "student_payments":
       return StudentPayment;
+    case "staffpermissions":
+      return StaffPermission;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
@@ -138,8 +140,6 @@ const dynamicCrudController = (collection) => {
             const io = req.app.get("io");
             if (io) {
               io.to(collection).emit(`${collection}_created`, savedItem);
-            } else {
-              console.error("Socket.IO instance not found");
             }
 
             return res.status(201).json(savedItem);
@@ -219,8 +219,7 @@ const dynamicCrudController = (collection) => {
             const io = req.app.get("io");
             if (io) {
               io.to(collection).emit(`${collection}_created`, savedItem);
-            } else {
-              console.error("Socket.IO instance not found");
+              console.log(`[SOCKET] ${collection}_created emitted`);
             }
 
             return res.status(201).json(savedItem);
@@ -421,8 +420,6 @@ const dynamicCrudController = (collection) => {
         if (io) {
           console.log(`Emitting ${collection}_fetched:`, items);
           io.to(collection).emit(`${collection}_fetched`, items);
-        } else {
-          console.error("Socket.IO instance not found in getAll");
         }
 
         res.status(200).json({
@@ -533,8 +530,7 @@ const dynamicCrudController = (collection) => {
             const io = req.app.get("io");
             if (io) {
               io.to(collection).emit(`${collection}_updated`, updatedItem);
-            } else {
-              console.error("Socket.IO instance not found");
+              console.log(`[SOCKET] ${collection}_updated emitted`);
             }
 
             return res.status(200).json(updatedItem);
@@ -663,8 +659,6 @@ const dynamicCrudController = (collection) => {
             const io = req.app.get("io");
             if (io) {
               io.to(collection).emit(`${collection}_updated`, updatedItem);
-            } else {
-              console.error("Socket.IO instance not found");
             }
 
             return res.status(200).json(updatedItem);
@@ -685,11 +679,28 @@ const dynamicCrudController = (collection) => {
       try {
         const itemId = req.params.id;
 
+        // Validate ObjectId for MongoDB collections
+        if (!mongoose.Types.ObjectId.isValid(itemId)) {
+          return res.status(400).json({ error: "Invalid ID" });
+        }
+
         const deps = deletionDependencies[collection.toLowerCase()] || [];
 
         for (const dep of deps) {
           const query = {};
-          query[dep.field] = mongoose.Types.ObjectId(itemId);
+
+          // Check if this field expects an ObjectId
+          // (ends with ._id, is "_id", or contains "id")
+          const isObjectIdField =
+            dep.field.endsWith("._id") ||
+            dep.field === "_id" ||
+            dep.field.toLowerCase().includes("id");
+
+          if (isObjectIdField) {
+            query[dep.field] = new mongoose.Types.ObjectId(itemId);
+          } else {
+            query[dep.field] = itemId;
+          }
 
           const isReferenced = await dep.model.exists(query);
           if (isReferenced) {
@@ -700,17 +711,18 @@ const dynamicCrudController = (collection) => {
           }
         }
 
+        // Attempt to delete the item
         const deletedItem = await model.findByIdAndDelete(itemId);
 
         if (!deletedItem) {
           return res.status(404).json({ error: "Item not found" });
         }
 
+        // Emit via Socket.IO if available
         const io = req.app.get("io");
         if (io) {
           io.to(collection).emit(`${collection}_deleted`, deletedItem);
-        } else {
-          console.error("Socket.IO instance not found");
+          console.log(`[SOCKET] ${collection}_deleted emitted`);
         }
 
         return res.status(200).json({ message: "Deleted successfully" });

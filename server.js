@@ -18,15 +18,21 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Match your Vue.js frontend
+    origin: "http://localhost:5173",
     methods: ["GET", "POST", "PATCH", "DELETE"],
   },
 });
 
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+  socket.on("join-room", (collection) => {
+    socket.join(collection);
+    console.log("Joined room:", collection);
+  });
+});
+
 // Attach io to app for use in controllers
 app.set("io", io);
-
-// Middleware
 app.use(cors({ origin: "http://localhost:5173" })); // Match frontend origin
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
