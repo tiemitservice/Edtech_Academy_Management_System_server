@@ -15,13 +15,12 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    teacher: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Staff",
-        required: false,
-      },
-    ],
+    teacher: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
+      required: false,
+    },
+
     gender: {
       type: String,
       required: true,
@@ -77,6 +76,23 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+
+    st_birth_province: {
+      type: String,
+      required: false,
+    },
+    st_birth_district: {
+      type: String,
+      required: false,
+    },
+    st_birth_commune: {
+      type: String,
+      required: false,
+    },
+    st_birth_village: {
+      type: String,
+      required: false,
+    },
     date_of_birth: {
       type: Date,
       required: true,
@@ -89,11 +105,33 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    score: {
-      type: Number,
+    father_phone: {
+      type: String,
       required: false,
-      default: 0,
+      unique: true,
     },
+    mother_phone: {
+      type: String,
+      required: false,
+      unique: true,
+    },
+    family_province: {
+      type: String,
+      required: false,
+    },
+    family_district: {
+      type: String,
+      required: false,
+    },
+    family_commune: {
+      type: String,
+      required: false,
+    },
+    family_village: {
+      type: String,
+      required: false,
+    },
+
     midterm_score: {
       type: Number,
       required: false,

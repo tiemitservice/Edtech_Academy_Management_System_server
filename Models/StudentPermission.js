@@ -11,7 +11,8 @@ const studentPermissionSchema = new mongoose.Schema({
     required: true,
   },
   student_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
     required: true,
   },
   reason: {
