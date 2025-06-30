@@ -1,15 +1,15 @@
-// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const dynamicRoute = require("./routes/dynamicRoutes");
 const autheRouter = require("./routes/userRoutes");
-const currentRoute = require("./Auth/currentUserRoute"); // Corrected typo
+const currentRoute = require("./Auth/currentUserRoute");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 require("./Controller/Cron");
+
 // Initialize express app
 dotenv.config();
 const app = express();
@@ -23,17 +23,9 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
-  socket.on("join-room", (collection) => {
-    socket.join(collection);
-    console.log("Joined room:", collection);
-  });
-});
-
 // Attach io to app for use in controllers
 app.set("io", io);
-app.use(cors({ origin: "http://localhost:5173" })); // Match frontend origin
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 
@@ -58,18 +50,18 @@ app.use("/api", currentRoute);
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
-  socket.on("join-room", (collection) => {
+  socket.on("join", (collection) => {
     console.log(`Client joined room: ${collection}`);
     socket.join(collection);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
   });
 
   socket.on("send-message", (message) => {
     console.log("Message received:", message);
     io.emit("receive-message", message);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
   });
 });
 

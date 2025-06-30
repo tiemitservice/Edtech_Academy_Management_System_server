@@ -110,14 +110,11 @@ const dynamicCrudController = (collection) => {
             const data = { ...req.body };
 
             if (collection.toLowerCase() === "students") {
-              data.teacher = Array.isArray(req.body.teacher)
-                ? req.body.teacher
-                : req.body.teacher
-                ? [req.body.teacher]
-                : [];
-              data.teacher = data.teacher.filter((id) =>
-                mongoose.Types.ObjectId.isValid(id)
-              );
+              const teacherId = req.body.teacher;
+
+              data.teacher = mongoose.Types.ObjectId.isValid(teacherId)
+                ? teacherId
+                : null;
 
               data.rental_book = Array.isArray(req.body.rental_book)
                 ? req.body.rental_book
@@ -176,14 +173,11 @@ const dynamicCrudController = (collection) => {
             });
 
             if (collection.toLowerCase() === "students") {
-              data.teacher = Array.isArray(req.body.teacher)
-                ? req.body.teacher
-                : req.body.teacher
-                ? [req.body.teacher]
-                : [];
-              data.teacher = data.teacher.filter((id) =>
-                mongoose.Types.ObjectId.isValid(id)
-              );
+              const teacherId = req.body.teacher;
+
+              data.teacher = mongoose.Types.ObjectId.isValid(teacherId)
+                ? teacherId
+                : null;
 
               data.rental_book = Array.isArray(req.body.rental_book)
                 ? req.body.rental_book
@@ -436,25 +430,254 @@ const dynamicCrudController = (collection) => {
 
     getOne: async (req, res) => {},
 
+    // update: async (req, res) => {
+    //   try {
+    //     // Get image fields from the schema
+    //     const imageFields = getImageFields(model.schema);
+
+    //     // If no image fields, process without file upload
+    //     if (imageFields.length === 0) {
+    //       try {
+    //         const updatedData = { ...req.body };
+
+    //         if (collection.toLowerCase() === "students") {
+    //           updatedData.teacher = req.body.teacher
+    //             ? mongoose.Types.ObjectId.isValid(req.body.teacher)
+    //               ? req.body.teacher
+    //               : null
+    //             : null;
+
+    //           updatedData.rental_book = Array.isArray(req.body.rental_book)
+    //             ? req.body.rental_book
+    //             : req.body.rental_book
+    //             ? [req.body.rental_book]
+    //             : [];
+    //           updatedData.rental_book = updatedData.rental_book.filter((id) =>
+    //             mongoose.Types.ObjectId.isValid(id)
+    //           );
+
+    //           updatedData.status =
+    //             req.body.status === "true" || req.body.status === true;
+    //           updatedData.score = parseInt(req.body.score) || 0;
+    //           updatedData.attendance = parseInt(req.body.attendance) || 0;
+
+    //           const attendanceRecord = await model.findById(req.params.id);
+    //           if (!attendanceRecord) {
+    //             return res.status(404).json({ error: "Attendance not found" });
+    //           }
+
+    //           const scoreStatus = req.body.score_status || "insert_more";
+    //           const incomingScore = {
+    //             quiz_score: Number(req.body.quiz_score) || 0,
+    //             midterm_score: Number(req.body.midterm_score) || 0,
+    //             final_score: Number(req.body.final_score) || 0,
+    //           };
+
+    //           if (scoreStatus === "insert_more") {
+    //             updatedData.quiz_score =
+    //               (attendanceRecord.quiz_score || 0) + incomingScore.quiz_score;
+    //             updatedData.midterm_score =
+    //               (attendanceRecord.midterm_score || 0) +
+    //               incomingScore.midterm_score;
+    //             updatedData.final_score =
+    //               (attendanceRecord.final_score || 0) +
+    //               incomingScore.final_score;
+    //             updatedData.total_attendance_score =
+    //               (attendanceRecord.total_attendance_score || 0) +
+    //               incomingScore.quiz_score +
+    //               incomingScore.midterm_score +
+    //               incomingScore.final_score;
+    //           } else if (scoreStatus === "replace") {
+    //             const oldQuiz = Number(req.body.old_quiz_score) || 0;
+    //             const oldMidterm = Number(req.body.old_midterm_score) || 0;
+    //             const oldFinal = Number(req.body.old_final_score) || 0;
+
+    //             updatedData.quiz_score = incomingScore.quiz_score;
+    //             updatedData.midterm_score = incomingScore.midterm_score;
+    //             updatedData.final_score = incomingScore.final_score;
+    //             updatedData.total_attendance_score =
+    //               (attendanceRecord.total_attendance_score || 0) -
+    //               oldQuiz -
+    //               oldMidterm -
+    //               oldFinal +
+    //               incomingScore.quiz_score +
+    //               incomingScore.midterm_score +
+    //               incomingScore.final_score;
+    //           }
+
+    //           delete updatedData.score_status;
+    //         }
+
+    //         const updatedItem = await model.findByIdAndUpdate(
+    //           req.params.id,
+    //           updatedData,
+    //           { new: true }
+    //         );
+
+    //         if (!updatedItem) {
+    //           return res.status(404).json({ error: "Item not found" });
+    //         }
+
+    //         const io = req.app.get("io");
+    //         if (io) {
+    //           io.to(collection).emit(`${collection}_updated`, updatedItem);
+    //           console.log(`[SOCKET] ${collection}_updated emitted`);
+    //         }
+
+    //         return res.status(200).json(updatedItem);
+    //       } catch (err) {
+    //         return res
+    //           .status(400)
+    //           .json({ error: "Update failed", details: err.message });
+    //       }
+    //     }
+
+    //     // Configure Multer for dynamic image fields
+    //     const uploadFields = imageFields.map((field) => ({
+    //       name: field,
+    //       maxCount: 1,
+    //     }));
+    //     upload.fields(uploadFields)(req, res, async (err) => {
+    //       if (err) {
+    //         return res
+    //           .status(400)
+    //           .json({ error: "Image upload error", details: err.message });
+    //       }
+
+    //       try {
+    //         const updatedData = { ...req.body };
+
+    //         // Clean req.body to remove invalid image fields
+    //         imageFields.forEach((field) => {
+    //           if (
+    //             updatedData[field] &&
+    //             typeof updatedData[field] === "object"
+    //           ) {
+    //             delete updatedData[field]; // Prevent validation errors
+    //           }
+    //         });
+
+    //         // Map uploaded file URLs to schema fields
+    //         if (req.files) {
+    //           imageFields.forEach((field) => {
+    //             if (req.files[field]) {
+    //               updatedData[field] = req.files[field][0].path;
+    //             }
+    //           });
+    //         }
+
+    //         if (collection.toLowerCase() === "students") {
+    //           updatedData.teacher = req.body.teacher
+    //             ? mongoose.Types.ObjectId.isValid(req.body.teacher)
+    //               ? req.body.teacher
+    //               : null
+    //             : null;
+
+    //           updatedData.rental_book = Array.isArray(req.body.rental_book)
+    //             ? req.body.rental_book
+    //             : req.body.rental_book
+    //             ? [req.body.rental_book]
+    //             : [];
+    //           updatedData.rental_book = updatedData.rental_book.filter((id) =>
+    //             mongoose.Types.ObjectId.isValid(id)
+    //           );
+
+    //           updatedData.status =
+    //             req.body.status === "true" || req.body.status === true;
+    //           updatedData.score = parseInt(req.body.score) || 0;
+    //           updatedData.attendance = parseInt(req.body.attendance) || 0;
+
+    //           const attendanceRecord = await model.findById(req.params.id);
+    //           if (!attendanceRecord) {
+    //             return res.status(404).json({ error: "Attendance not found" });
+    //           }
+
+    //           const scoreStatus = req.body.score_status || "insert_more";
+    //           const incomingScore = {
+    //             quiz_score: Number(req.body.quiz_score) || 0,
+    //             midterm_score: Number(req.body.midterm_score) || 0,
+    //             final_score: Number(req.body.final_score) || 0,
+    //           };
+
+    //           if (scoreStatus === "insert_more") {
+    //             updatedData.quiz_score =
+    //               (attendanceRecord.quiz_score || 0) + incomingScore.quiz_score;
+    //             updatedData.midterm_score =
+    //               (attendanceRecord.midterm_score || 0) +
+    //               incomingScore.midterm_score;
+    //             updatedData.final_score =
+    //               (attendanceRecord.final_score || 0) +
+    //               incomingScore.final_score;
+    //             updatedData.total_attendance_score =
+    //               (attendanceRecord.total_attendance_score || 0) +
+    //               incomingScore.quiz_score +
+    //               incomingScore.midterm_score +
+    //               incomingScore.final_score;
+    //           } else if (scoreStatus === "replace") {
+    //             const oldQuiz = Number(req.body.old_quiz_score) || 0;
+    //             const oldMidterm = Number(req.body.old_midterm_score) || 0;
+    //             const oldFinal = Number(req.body.old_final_score) || 0;
+
+    //             updatedData.quiz_score = incomingScore.quiz_score;
+    //             updatedData.midterm_score = incomingScore.midterm_score;
+    //             updatedData.final_score = incomingScore.final_score;
+    //             updatedData.total_attendance_score =
+    //               (attendanceRecord.total_attendance_score || 0) -
+    //               oldQuiz -
+    //               oldMidterm -
+    //               oldFinal +
+    //               incomingScore.quiz_score +
+    //               incomingScore.midterm_score +
+    //               incomingScore.final_score;
+    //           }
+
+    //           delete updatedData.score_status;
+    //         }
+
+    //         const updatedItem = await model.findByIdAndUpdate(
+    //           req.params.id,
+    //           updatedData,
+    //           { new: true }
+    //         );
+
+    //         if (!updatedItem) {
+    //           return res.status(404).json({ error: "Item not found" });
+    //         }
+
+    //         const io = req.app.get("io");
+    //         if (io) {
+    //           io.to(collection).emit(`${collection}_updated`, updatedItem);
+    //         }
+
+    //         return res.status(200).json(updatedItem);
+    //       } catch (err) {
+    //         return res
+    //           .status(400)
+    //           .json({ error: "Update failed", details: err.message });
+    //       }
+    //     });
+    //   } catch (err) {
+    //     return res
+    //       .status(500)
+    //       .json({ error: "Server error", details: err.message });
+    //   }
+    // },
+
     update: async (req, res) => {
       try {
-        // Get image fields from the schema
         const imageFields = getImageFields(model.schema);
 
-        // If no image fields, process without file upload
         if (imageFields.length === 0) {
           try {
             const updatedData = { ...req.body };
 
+            // Handle specific collections
             if (collection.toLowerCase() === "students") {
-              updatedData.teacher = Array.isArray(req.body.teacher)
-                ? req.body.teacher
-                : req.body.teacher
-                ? [req.body.teacher]
-                : [];
-              updatedData.teacher = updatedData.teacher.filter((id) =>
-                mongoose.Types.ObjectId.isValid(id)
-              );
+              updatedData.teacher = req.body.teacher
+                ? mongoose.Types.ObjectId.isValid(req.body.teacher)
+                  ? req.body.teacher
+                  : null
+                : null;
 
               updatedData.rental_book = Array.isArray(req.body.rental_book)
                 ? req.body.rental_book
@@ -515,12 +738,49 @@ const dynamicCrudController = (collection) => {
               }
 
               delete updatedData.score_status;
+            } else if (collection.toLowerCase() === "classes") {
+              // Ensure only valid fields are updated
+              const allowedFields = [
+                "name",
+                "duration",
+                "students",
+                "staff",
+                "room",
+              ];
+              Object.keys(updatedData).forEach((key) => {
+                if (!allowedFields.includes(key)) {
+                  delete updatedData[key];
+                }
+              });
+
+              // Validate ObjectId fields
+              if (updatedData.students) {
+                updatedData.students = Array.isArray(updatedData.students)
+                  ? updatedData.students.filter((id) =>
+                      mongoose.Types.ObjectId.isValid(id)
+                    )
+                  : mongoose.Types.ObjectId.isValid(updatedData.students)
+                  ? [updatedData.students]
+                  : [];
+              }
+              if (
+                updatedData.staff &&
+                !mongoose.Types.ObjectId.isValid(updatedData.staff)
+              ) {
+                updatedData.staff = null;
+              }
+              if (
+                updatedData.room &&
+                !mongoose.Types.ObjectId.isValid(updatedData.room)
+              ) {
+                updatedData.room = null;
+              }
             }
 
             const updatedItem = await model.findByIdAndUpdate(
               req.params.id,
               updatedData,
-              { new: true }
+              { new: true, runValidators: true }
             );
 
             if (!updatedItem) {
@@ -530,18 +790,22 @@ const dynamicCrudController = (collection) => {
             const io = req.app.get("io");
             if (io) {
               io.to(collection).emit(`${collection}_updated`, updatedItem);
-              console.log(`[SOCKET] ${collection}_updated emitted`);
+              console.log(
+                `[SOCKET] ${collection}_updated emitted:`,
+                updatedItem
+              );
             }
 
             return res.status(200).json(updatedItem);
           } catch (err) {
+            console.error(`Update error for ${collection}:`, err);
             return res
               .status(400)
               .json({ error: "Update failed", details: err.message });
           }
         }
 
-        // Configure Multer for dynamic image fields
+        // Handle collections with image fields
         const uploadFields = imageFields.map((field) => ({
           name: field,
           maxCount: 1,
@@ -562,7 +826,7 @@ const dynamicCrudController = (collection) => {
                 updatedData[field] &&
                 typeof updatedData[field] === "object"
               ) {
-                delete updatedData[field]; // Prevent validation errors
+                delete updatedData[field];
               }
             });
 
@@ -576,14 +840,12 @@ const dynamicCrudController = (collection) => {
             }
 
             if (collection.toLowerCase() === "students") {
-              updatedData.teacher = Array.isArray(req.body.teacher)
-                ? req.body.teacher
-                : req.body.teacher
-                ? [req.body.teacher]
-                : [];
-              updatedData.teacher = updatedData.teacher.filter((id) =>
-                mongoose.Types.ObjectId.isValid(id)
-              );
+              // Same student-specific logic as above
+              updatedData.teacher = req.body.teacher
+                ? mongoose.Types.ObjectId.isValid(req.body.teacher)
+                  ? req.body.teacher
+                  : null
+                : null;
 
               updatedData.rental_book = Array.isArray(req.body.rental_book)
                 ? req.body.rental_book
@@ -644,12 +906,49 @@ const dynamicCrudController = (collection) => {
               }
 
               delete updatedData.score_status;
+            } else if (collection.toLowerCase() === "classes") {
+              // Ensure only valid fields are updated
+              const allowedFields = [
+                "name",
+                "duration",
+                "students",
+                "staff",
+                "room",
+              ];
+              Object.keys(updatedData).forEach((key) => {
+                if (!allowedFields.includes(key)) {
+                  delete updatedData[key];
+                }
+              });
+
+              // Validate ObjectId fields
+              if (updatedData.students) {
+                updatedData.students = Array.isArray(updatedData.students)
+                  ? updatedData.students.filter((id) =>
+                      mongoose.Types.ObjectId.isValid(id)
+                    )
+                  : mongoose.Types.ObjectId.isValid(updatedData.students)
+                  ? [updatedData.students]
+                  : [];
+              }
+              if (
+                updatedData.staff &&
+                !mongoose.Types.ObjectId.isValid(updatedData.staff)
+              ) {
+                updatedData.staff = null;
+              }
+              if (
+                updatedData.room &&
+                !mongoose.Types.ObjectId.isValid(updatedData.room)
+              ) {
+                updatedData.room = null;
+              }
             }
 
             const updatedItem = await model.findByIdAndUpdate(
               req.params.id,
               updatedData,
-              { new: true }
+              { new: true, runValidators: true }
             );
 
             if (!updatedItem) {
@@ -659,22 +958,27 @@ const dynamicCrudController = (collection) => {
             const io = req.app.get("io");
             if (io) {
               io.to(collection).emit(`${collection}_updated`, updatedItem);
+              console.log(
+                `[SOCKET] ${collection}_updated emitted:`,
+                updatedItem
+              );
             }
 
             return res.status(200).json(updatedItem);
           } catch (err) {
+            console.error(`Update error for ${collection}:`, err);
             return res
               .status(400)
               .json({ error: "Update failed", details: err.message });
           }
         });
       } catch (err) {
+        console.error(`Server error for ${collection}:`, err);
         return res
           .status(500)
           .json({ error: "Server error", details: err.message });
       }
     },
-
     delete: async (req, res) => {
       try {
         const itemId = req.params.id;
