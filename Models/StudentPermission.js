@@ -10,23 +10,20 @@ const studentPermissionSchema = new mongoose.Schema({
     ref: "Staff",
     required: true,
   },
-  student_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Student",
-    required: true,
-  },
+  // student_id: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "Student",
+  //   required: true,
+  // },
   reason: {
     type: String,
     required: true,
   },
-  start_date: {
-    type: Date,
+  hold_date: {
+    type: Array,
     required: true,
   },
-  end_date: {
-    type: Date,
-    required: true,
-  },
+
   created_at: {
     type: Date,
     default: Date.now,

@@ -86,6 +86,7 @@ const deletionDependencies = {
   ],
   positions: [{ model: Staff, field: "position" }],
   departments: [{ model: Staff, field: "department" }],
+  sections: [{ model: Class, field: "duration" }],
   book_categories: [{ model: Book, field: "bookType" }],
   rooms: [{ model: Class, field: "room" }],
 };
@@ -171,6 +172,18 @@ const dynamicCrudController = (collection) => {
                 delete data[field]; // Prevent validation errors
               }
             });
+
+            // staff and department
+            if (collection.toLowerCase() === "staffs") {
+              data.position = mongoose.Types.ObjectId.isValid(req.body.position)
+                ? req.body.position
+                : null;
+              data.department = mongoose.Types.ObjectId.isValid(
+                req.body.department
+              )
+                ? req.body.department
+                : null;
+            }
 
             if (collection.toLowerCase() === "students") {
               const teacherId = req.body.teacher;
@@ -375,7 +388,10 @@ const dynamicCrudController = (collection) => {
 
           switch (collection.toLowerCase()) {
             case "staffs":
-              query.populate("position").populate("department");
+              // // only positio: '6455233greye2114'n and department: '6455233greye2114'n
+              // query
+              //   .populate({ path: "position" })
+              //   .populate({ path: "department" });
               break;
             case "classes":
               query
@@ -838,6 +854,19 @@ const dynamicCrudController = (collection) => {
                 }
               });
             }
+            // staff and department
+            if (collection.toLowerCase() === "staffs") {
+              updatedData.department = req.body.department
+                ? mongoose.Types.ObjectId.isValid(req.body.department)
+                  ? req.body.department
+                  : null
+                : null;
+              updatedData.position = req.body.position
+                ? mongoose.Types.ObjectId.isValid(req.body.position)
+                  ? req.body.position
+                  : null
+                : null;
+            }
 
             if (collection.toLowerCase() === "students") {
               // Same student-specific logic as above
@@ -979,11 +1008,69 @@ const dynamicCrudController = (collection) => {
           .json({ error: "Server error", details: err.message });
       }
     },
+    // delete: async (req, res) => {
+    //   try {
+    //     const itemId = req.params.id;
+
+    //     // Validate ObjectId for MongoDB collections
+    //     if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    //       return res.status(400).json({ error: "Invalid ID" });
+    //     }
+
+    //     const deps = deletionDependencies[collection.toLowerCase()] || [];
+
+    //     for (const dep of deps) {
+    //       const query = {};
+
+    //       // Check if this field expects an ObjectId
+    //       // (ends with ._id, is "_id", or contains "id")
+    //       const isObjectIdField =
+    //         dep.field.endsWith("._id") ||
+    //         dep.field === "_id" ||
+    //         dep.field.toLowerCase().includes("id");
+
+    //       if (isObjectIdField) {
+    //         query[dep.field] = new mongoose.Types.ObjectId(itemId);
+    //       } else {
+    //         query[dep.field] = itemId;
+    //       }
+
+    //       const isReferenced = await dep.model.exists(query);
+    //       if (isReferenced) {
+    //         return res.status(400).json({
+    //           error: "Delete failed",
+    //           details: `Cannot delete ${collection} because it is referenced in ${dep.model.collection.name}`,
+    //         });
+    //       }
+    //     }
+
+    //     // Attempt to delete the item
+    //     const deletedItem = await model.findByIdAndDelete(itemId);
+
+    //     if (!deletedItem) {
+    //       return res.status(404).json({ error: "Item not found" });
+    //     }
+
+    //     // Emit via Socket.IO if available
+    //     const io = req.app.get("io");
+    //     if (io) {
+    //       io.to(collection).emit(`${collection}_deleted`, deletedItem);
+    //       console.log(`[SOCKET] ${collection}_deleted emitted`);
+    //     }
+
+    //     return res.status(200).json({ message: "Deleted successfully" });
+    //   } catch (err) {
+    //     console.error("Delete error:", err);
+    //     return res
+    //       .status(400)
+    //       .json({ error: "Delete failed", details: err.message });
+    //   }
+    // },
+
     delete: async (req, res) => {
       try {
         const itemId = req.params.id;
 
-        // Validate ObjectId for MongoDB collections
         if (!mongoose.Types.ObjectId.isValid(itemId)) {
           return res.status(400).json({ error: "Invalid ID" });
         }
@@ -992,9 +1079,6 @@ const dynamicCrudController = (collection) => {
 
         for (const dep of deps) {
           const query = {};
-
-          // Check if this field expects an ObjectId
-          // (ends with ._id, is "_id", or contains "id")
           const isObjectIdField =
             dep.field.endsWith("._id") ||
             dep.field === "_id" ||
@@ -1015,18 +1099,16 @@ const dynamicCrudController = (collection) => {
           }
         }
 
-        // Attempt to delete the item
         const deletedItem = await model.findByIdAndDelete(itemId);
 
         if (!deletedItem) {
           return res.status(404).json({ error: "Item not found" });
         }
 
-        // Emit via Socket.IO if available
         const io = req.app.get("io");
         if (io) {
           io.to(collection).emit(`${collection}_deleted`, deletedItem);
-          console.log(`[SOCKET] ${collection}_deleted emitted`);
+          console.log(`[SOCKET] ${collection}_deleted emitted:`, deletedItem);
         }
 
         return res.status(200).json({ message: "Deleted successfully" });

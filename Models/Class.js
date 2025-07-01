@@ -35,6 +35,10 @@ const classSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Section",
     },
+    mark_as_completed: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

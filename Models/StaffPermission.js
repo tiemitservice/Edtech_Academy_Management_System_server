@@ -10,12 +10,10 @@ const staffPermissionSchema = new mongoose.Schema({
     required: true,
   },
   // array
-  hold_date: [
-    {
-      type: Array,
-      required: true,
-    },
-  ],
+  hold_date: {
+    type: Array,
+    required: true,
+  },
 
   created_at: {
     type: Date,
