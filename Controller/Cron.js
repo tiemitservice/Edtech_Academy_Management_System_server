@@ -1,12 +1,14 @@
 const Student = require("../Models/Student");
+const Staff = require("../Models/Staff");
 const cron = require("node-cron");
 
-// Every minute (for testing), with timezone
 cron.schedule(
-  "0 */3 * * *",
+  "* * * * *",
   async () => {
-    console.log("Resetting all student attendance...");
+    console.log("Resetting all student and staff attendance...");
+
     try {
+      // Reset students
       await Student.updateMany(
         {},
         {
@@ -15,7 +17,19 @@ cron.schedule(
           attendence: 0,
         }
       );
-      console.log("All attendance reset!");
+      console.log("All student attendance reset!");
+
+      // Reset staff
+      await Staff.updateMany(
+        {},
+        {
+          attendance: null,
+          entry_time: null,
+          exit_time: null,
+          note: null,
+        }
+      );
+      console.log("All staff attendance reset!");
     } catch (err) {
       console.error("Error resetting attendance:", err);
     }

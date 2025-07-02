@@ -45,6 +45,27 @@ const staffSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    attendance: {
+      type: String,
+      required: false,
+      enum: ["present", "absent", "late", "permission"],
+    },
+    note: {
+      type: String,
+      required: false,
+    },
+    entry_time: {
+      type: String,
+      required: false,
+    },
+    exit_time: {
+      type: String,
+      required: false,
+    },
+    checking_at: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );

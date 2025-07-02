@@ -16,6 +16,7 @@ const StudentCategory = require("../Models/StudentCategory");
 const StudentPermission = require("../Models/StudentPermission");
 const StudentPayment = require("../Models/StudentPayment");
 const StaffPermission = require("../Models/StaffPermission");
+const StaffAttendance = require("../Models/StaffAttendance");
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
@@ -63,6 +64,8 @@ const loadModel = (collection) => {
       return StudentPayment;
     case "staffpermissions":
       return StaffPermission;
+    case "staffattendances":
+      return StaffAttendance;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;

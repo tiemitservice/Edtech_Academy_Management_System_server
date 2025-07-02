@@ -20,6 +20,7 @@ const collections = [
   "student_permissions",
   "student_payments",
   "staffpermissions",
+  "staffattendances",
 ];
 
 collections.forEach((collection) => {
