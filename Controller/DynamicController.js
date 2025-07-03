@@ -398,10 +398,8 @@ const dynamicCrudController = (collection) => {
               break;
             case "classes":
               query
-                .populate({
-                  path: "students.student",
-                  select: "kh_name en_name", // Only fetch required student fields
-                })
+                .populate("students.student")
+
                 .populate({
                   path: "room",
                   populate: ["booked_by", "section"],
@@ -765,7 +763,6 @@ const dynamicCrudController = (collection) => {
 
               delete updatedData.score_status;
             } else if (collection.toLowerCase() === "classes") {
-              // Ensure only valid fields are updated
               const allowedFields = [
                 "name",
                 "duration",
@@ -774,28 +771,81 @@ const dynamicCrudController = (collection) => {
                 "room",
                 "day_class",
               ];
+
               Object.keys(updatedData).forEach((key) => {
                 if (!allowedFields.includes(key)) {
                   delete updatedData[key];
                 }
               });
 
-              // Validate ObjectId fields
-              if (updatedData.students) {
-                updatedData.students = Array.isArray(updatedData.students)
-                  ? updatedData.students.filter((id) =>
-                      mongoose.Types.ObjectId.isValid(id)
-                    )
-                  : mongoose.Types.ObjectId.isValid(updatedData.students)
-                  ? [updatedData.students]
-                  : [];
+              // Handle students field
+              if (updatedData.students && Array.isArray(updatedData.students)) {
+                updatedData.students = updatedData.students
+                  .filter(
+                    (s) =>
+                      s &&
+                      s.student &&
+                      mongoose.Types.ObjectId.isValid(s.student)
+                  )
+                  .map((s) => {
+                    const class_practice = Number(s.class_practice) || 0;
+                    const home_work = Number(s.home_work) || 0;
+                    const assignment_score = Number(s.assignment_score) || 0;
+                    const presentation = Number(s.presentation) || 0;
+                    const revision_test = Number(s.revision_test) || 0;
+                    const final_exam = Number(s.final_exam) || 0;
+                    const work_book = Number(s.work_book) || 0;
+
+                    const total_score =
+                      class_practice +
+                      home_work +
+                      assignment_score +
+                      presentation +
+                      revision_test +
+                      final_exam +
+                      work_book;
+
+                    const studentData = {
+                      student: new mongoose.Types.ObjectId(s.student),
+                      attendance_score: Number(s.attendance_score) || 0,
+                      class_practice,
+                      home_work,
+                      assignment_score,
+                      presentation,
+                      revision_test,
+                      final_exam,
+                      work_book,
+                      total_score,
+                      note: s.note || "",
+                      exit_time: s.exit_time || "",
+                      entry_time: s.entry_time || "",
+                      checking_at: s.checking_at || "",
+                      comments: total_score >= 50 ? "passed" : "failed",
+                    };
+
+                    // Add `attendance` only if it's valid
+                    const validAttendance = [
+                      "present",
+                      "absent",
+                      "late",
+                      "permission",
+                    ];
+                    if (validAttendance.includes(s.attendance)) {
+                      studentData.attendance = s.attendance;
+                    }
+
+                    return studentData;
+                  });
               }
+
+              // Validate ObjectId fields
               if (
                 updatedData.staff &&
                 !mongoose.Types.ObjectId.isValid(updatedData.staff)
               ) {
                 updatedData.staff = null;
               }
+
               if (
                 updatedData.room &&
                 !mongoose.Types.ObjectId.isValid(updatedData.room)
@@ -962,15 +1012,39 @@ const dynamicCrudController = (collection) => {
               });
 
               // Validate ObjectId fields
-              if (updatedData.students) {
-                updatedData.students = Array.isArray(updatedData.students)
-                  ? updatedData.students.filter((id) =>
-                      mongoose.Types.ObjectId.isValid(id)
-                    )
-                  : mongoose.Types.ObjectId.isValid(updatedData.students)
-                  ? [updatedData.students]
-                  : [];
+              if (updatedData.students && Array.isArray(updatedData.students)) {
+                updatedData.students = updatedData.students
+                  .filter(
+                    (s) =>
+                      s &&
+                      s.student &&
+                      mongoose.Types.ObjectId.isValid(s.student)
+                  )
+                  .map((s) => ({
+                    student: new mongoose.Types.ObjectId(s.student),
+                    attendance_score: Number(s.attendance_score) || 0,
+                    class_practice: Number(s.class_practice) || 0,
+                    home_work: Number(s.home_work) || 0,
+                    assignment_score: Number(s.assignment_score) || 0,
+                    presentation: Number(s.presentation) || 0,
+                    revision_test: Number(s.revision_test) || 0,
+                    final_exam: Number(s.final_exam) || 0,
+                    total_score: Number(s.total_score) || 0,
+                    note: s.note || "",
+                    exit_time: s.exit_time || "",
+                    entry_time: s.entry_time || "",
+                    checking_at: s.checking_at || "",
+                    attendance: [
+                      "present",
+                      "absent",
+                      "late",
+                      "permission",
+                    ].includes(s.attendance)
+                      ? s.attendance
+                      : undefined,
+                  }));
               }
+
               if (
                 updatedData.staff &&
                 !mongoose.Types.ObjectId.isValid(updatedData.staff)

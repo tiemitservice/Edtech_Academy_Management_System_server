@@ -1,3 +1,4 @@
+const { min } = require("moment");
 const mongoose = require("mongoose");
 
 const classSchema = new mongoose.Schema(
@@ -17,18 +18,20 @@ const classSchema = new mongoose.Schema(
           ref: "Student",
           required: true,
         },
-        attendance_score: { type: Number, default: 0 },
-        class_practice: { type: Number, default: 0 },
-        home_work: { type: Number, default: 0 },
-        assignment_score: { type: Number, default: 0 },
-        presentation: { type: Number, default: 0 },
+        attendance_score: { type: Number, default: 0, min: 0, max: 100 },
+        class_practice: { type: Number, default: 0, min: 0, max: 5 },
+        home_work: { type: Number, default: 0, min: 0, max: 5 },
+        assignment_score: { type: Number, default: 0, min: 0, max: 12 },
+        presentation: { type: Number, default: 0, min: 0, max: 13 },
         revision_test: { type: Number, default: 0 },
-        final_exam: { type: Number, default: 0 },
+        final_exam: { type: Number, default: 0, min: 0, max: 30 },
         total_score: { type: Number, default: 0 },
+        work_book: { type: String, default: 0, min: 0, max: 10 },
         note: { type: String, default: "" },
         exit_time: { type: String, default: "" },
         entry_time: { type: String, default: "" },
         checking_at: { type: String },
+        comments: { type: String, enum: ["passed", "failed"] },
         attendance: {
           type: String,
           enum: ["present", "absent", "late", "permission"],
