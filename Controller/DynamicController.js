@@ -398,9 +398,16 @@ const dynamicCrudController = (collection) => {
               break;
             case "classes":
               query
-                .populate("students")
-                .populate({ path: "room", populate: ["booked_by", "section"] });
+                .populate({
+                  path: "students.student",
+                  select: "kh_name en_name", // Only fetch required student fields
+                })
+                .populate({
+                  path: "room",
+                  populate: ["booked_by", "section"],
+                });
               break;
+
             case "books":
               query.populate("bookType", "name");
               break;
@@ -431,8 +438,8 @@ const dynamicCrudController = (collection) => {
 
         const io = req.app.get("io");
         if (io) {
-          console.log(`Emitting ${collection}_fetched:`, items);
-          io.to(collection).emit(`${collection}_fetched`, items);
+          const safeItems = JSON.parse(JSON.stringify(items));
+          io.to(collection).emit(`${collection}_fetched`, safeItems);
         }
 
         res.status(200).json({
@@ -765,6 +772,7 @@ const dynamicCrudController = (collection) => {
                 "students",
                 "staff",
                 "room",
+                "day_class",
               ];
               Object.keys(updatedData).forEach((key) => {
                 if (!allowedFields.includes(key)) {
