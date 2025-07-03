@@ -26,7 +26,7 @@ const classSchema = new mongoose.Schema(
         revision_test: { type: Number, default: 0 },
         final_exam: { type: Number, default: 0, min: 0, max: 30 },
         total_score: { type: Number, default: 0 },
-        work_book: { type: String, default: 0, min: 0, max: 10 },
+        work_book: { type: Number, default: 0, min: 0, max: 10 }, // { type: String, default: 0, min: 0, max: 10 },
         note: { type: String, default: "" },
         exit_time: { type: String, default: "" },
         entry_time: { type: String, default: "" },
