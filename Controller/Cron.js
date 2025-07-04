@@ -1,25 +1,14 @@
-const Student = require("../Models/Student");
 const Staff = require("../Models/Staff");
+const Class = require("../Models/Class");
 const cron = require("node-cron");
 
 cron.schedule(
-  "* * * * *",
+  "* * * * *", // every 1 minute
   async () => {
-    console.log("Resetting all student and staff attendance...");
+    console.log("⏳ Resetting all student and staff attendance...");
 
     try {
-      // Reset students
-      await Student.updateMany(
-        {},
-        {
-          attendence_enum: null,
-          attendence_date: null,
-          attendence: 0,
-        }
-      );
-      console.log("All student attendance reset!");
-
-      // Reset staff
+      // ✅ Reset staff attendance
       await Staff.updateMany(
         {},
         {
@@ -29,9 +18,25 @@ cron.schedule(
           note: null,
         }
       );
-      console.log("All staff attendance reset!");
+      console.log("✅ All staff attendance reset!");
+
+      // ✅ Reset student attendance inside classes
+      await Class.updateMany(
+        {},
+        {
+          $set: {
+            "students.$[elem].attendance": null,
+            "students.$[elem].checking_at": null,
+            "students.$[elem].note": null,
+          },
+        },
+        {
+          arrayFilters: [{ "elem.attendance": { $exists: true } }],
+        }
+      );
+      console.log("✅ All student attendance reset inside classes!");
     } catch (err) {
-      console.error("Error resetting attendance:", err);
+      console.error("❌ Error resetting attendance:", err);
     }
   },
   {

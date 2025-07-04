@@ -413,10 +413,10 @@ const dynamicCrudController = (collection) => {
               query.populate("section").populate("booked_by");
               break;
             case "students":
-              query.populate({
-                path: "teacher",
-                populate: ["position", "department"],
-              });
+              // query.populate({
+              //   path: "teacher",
+              //   populate: ["position", "department"],
+              // });
               break;
             case "attendances":
               query
@@ -770,6 +770,8 @@ const dynamicCrudController = (collection) => {
                 "staff",
                 "room",
                 "day_class",
+                "mark_as_completed",
+                "status",
               ];
 
               Object.keys(updatedData).forEach((key) => {
@@ -1004,6 +1006,9 @@ const dynamicCrudController = (collection) => {
                 "students",
                 "staff",
                 "room",
+                "day_class",
+                "status",
+                "mark_as_completed",
               ];
               Object.keys(updatedData).forEach((key) => {
                 if (!allowedFields.includes(key)) {

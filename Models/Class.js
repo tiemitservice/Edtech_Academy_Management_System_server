@@ -47,10 +47,7 @@ const classSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Room",
     },
-    status: {
-      type: Boolean,
-      default: true,
-    },
+
     day_class: {
       type: Array,
     },
@@ -58,9 +55,13 @@ const classSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Section",
     },
+    status: {
+      type: Boolean,
+      default: true,
+    },
     mark_as_completed: {
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
   { timestamps: true }
