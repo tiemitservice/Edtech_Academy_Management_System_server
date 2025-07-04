@@ -1,20 +1,23 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const bookCategorySchema = new mongoose.Schema({
+const bookCategorySchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
-    sort_name: {
-        type: String,
-        required: true,
-    },
+    // sort_name: {
+    //   type: String,
+    //   required: true,
+    // },
     status: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
 
-const BookCategory = mongoose.model('BookCategory', bookCategorySchema);
+const BookCategory = mongoose.model("BookCategory", bookCategorySchema);
 
 module.exports = BookCategory;

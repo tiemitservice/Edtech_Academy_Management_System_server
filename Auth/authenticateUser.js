@@ -1,29 +1,34 @@
 const jwt = require("jsonwebtoken");
-const User = require("../Models/User"); // Assuming you have a User model
+const User = require("../Models/User"); // Adjust path as needed
 
-// Middleware to verify JWT token and fetch the user
 const authenticateUser = async (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", ""); // Get token from header
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" });
-  }
-
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Use your secret key
+    // Extract token from Authorization header
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
 
-    // Fetch the user from the database using the decoded userId
-    const user = await User.findById(decoded.userId);
+    // Verify JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId || decoded.id; // support both `userId` or `id`
+
+    // Fetch user from DB and remove sensitive fields
+    const user = await User.findById(userId).lean(); // lean() gives plain object
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Attach the user to the request object for use in subsequent middleware or routes
-    req.user = user;
+    // Destructure and remove sensitive fields
+    const { password, resetToken, token: jwtToken, ...safeUser } = user;
 
-    next(); // Proceed to the next middleware or route handler
-  } catch (err) {
+    // Attach sanitized user to the request
+    req.user = safeUser;
+
+    // Continue to next middleware
+    next();
+  } catch (error) {
+    console.error("Auth Error:", error.message);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };

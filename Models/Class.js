@@ -47,7 +47,11 @@ const classSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Room",
     },
-
+    // subject
+    subject: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+    },
     day_class: {
       type: Array,
     },

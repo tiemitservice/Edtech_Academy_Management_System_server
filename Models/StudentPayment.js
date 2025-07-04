@@ -33,8 +33,6 @@ const studentPaymentSchema = new mongoose.Schema(
       default: "paid",
     },
     description: String,
-
-    // ✅ Add this field
     late_days: {
       type: Number,
       default: 0,

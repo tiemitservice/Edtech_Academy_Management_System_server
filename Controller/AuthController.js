@@ -142,7 +142,15 @@ const login = async (req, res) => {
 
     // Generate a new token
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        token: user.token,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        image: user.image,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -161,6 +169,9 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        phoneNumber: user.phoneNumber,
+        token: user.token,
+        image: user.image,
       },
     });
   } catch (err) {

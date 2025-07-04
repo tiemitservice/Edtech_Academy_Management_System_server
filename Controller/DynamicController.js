@@ -17,6 +17,7 @@ const StudentPermission = require("../Models/StudentPermission");
 const StudentPayment = require("../Models/StudentPayment");
 const StaffPermission = require("../Models/StaffPermission");
 const StaffAttendance = require("../Models/StaffAttendance");
+const Subject = require("../Models/Subject");
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
@@ -66,6 +67,8 @@ const loadModel = (collection) => {
       return StaffPermission;
     case "staffattendances":
       return StaffAttendance;
+    case "subjects":
+      return Subject;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
@@ -92,6 +95,7 @@ const deletionDependencies = {
   sections: [{ model: Class, field: "duration" }],
   book_categories: [{ model: Book, field: "bookType" }],
   rooms: [{ model: Class, field: "room" }],
+  subjects: [{ model: Class, field: "subject" }],
 };
 
 const dynamicCrudController = (collection) => {
@@ -407,7 +411,7 @@ const dynamicCrudController = (collection) => {
               break;
 
             case "books":
-              query.populate("bookType", "name");
+              // query.populate("bookType", "name");
               break;
             case "rooms":
               query.populate("section").populate("booked_by");
@@ -772,6 +776,7 @@ const dynamicCrudController = (collection) => {
                 "day_class",
                 "mark_as_completed",
                 "status",
+                "subject",
               ];
 
               Object.keys(updatedData).forEach((key) => {
@@ -1009,6 +1014,7 @@ const dynamicCrudController = (collection) => {
                 "day_class",
                 "status",
                 "mark_as_completed",
+                "subject",
               ];
               Object.keys(updatedData).forEach((key) => {
                 if (!allowedFields.includes(key)) {
