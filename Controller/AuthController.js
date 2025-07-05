@@ -3,7 +3,7 @@ const User = require("../Models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { verifyToken, hashPassword } = require("./authHelper");
+const { verifyToken, hashPassword, comparePassword } = require("./authHelper");
 
 /**
  * Register a new user
@@ -122,44 +122,37 @@ const login = async (req, res) => {
         .status(400)
         .json({ error: "Email and password are required." });
     }
-    // validate if type not an email
-    if (email) {
-      // Only validate if email is provided
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ error: "Email is not valid." });
-      }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Email is not valid." });
     }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    // Generate a new token
     const token = jwt.sign(
       {
         id: user._id,
         email: user.email,
         role: user.role,
-        token: user.token,
         name: user.name,
-        phoneNumber: user.phoneNumber,
-        image: user.image,
+        permissions: user.permissions,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // Save the token to the database
+    // Optionally save token
     user.token = token;
     await user.save();
-
-    console.log("Generated Token:", token);
 
     res.status(200).json({
       message: "Login successful.",
@@ -172,11 +165,37 @@ const login = async (req, res) => {
         phoneNumber: user.phoneNumber,
         token: user.token,
         image: user.image,
+        permissions: user.permissions,
       },
     });
   } catch (err) {
     console.error("Login error:", err.message || err);
     res.status(500).json({ error: "An error occurred during login." });
+  }
+};
+const changePassword = async (req, res) => {
+  const { token, currentPassword, newPassword } = req.body;
+
+  if (!token) {
+    return res.status(401).json({ error: "Missing token" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch)
+      return res.status(400).json({ error: "Incorrect current password" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
@@ -224,7 +243,7 @@ const sendResetEmail = async (email, name, resetToken) => {
         }
         .container {
             background-color: white;
-            padding: 2rem;
+            padding: 2rem;  
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 100%;
@@ -305,30 +324,32 @@ const sendResetEmail = async (email, name, resetToken) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { token } = req.params;
+    const { newPassword } = req.body;
 
     if (!token || !newPassword) {
       return res
         .status(400)
         .json({ error: "Token and new password are required." });
     }
-    const decoded = await verifyToken(token);
-    if (!decoded) {
+
+    // Decode token (but don’t trust it alone)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Find user by token hash
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      _id: decoded.id,
+      resetToken: hashedToken,
+    });
+
+    if (!user) {
       return res.status(400).json({ error: "Invalid or expired token." });
     }
 
-    const user = await User.findById(decoded.id);
-    if (
-      !user ||
-      user.resetToken !==
-        crypto.createHash("sha256").update(token).digest("hex")
-    ) {
-      return res.status(400).json({ error: "Invalid or expired token." });
-    }
-    const hashedPassword = await hashPassword(newPassword);
-
-    user.password = hashedPassword;
-    user.resetToken = null; // Clear the reset token
+    // Hash and save new password
+    user.password = await hashPassword(newPassword);
+    user.resetToken = null; // clear token
     await user.save();
 
     res.status(200).json({ message: "Password reset successfully." });
@@ -417,13 +438,43 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { name, email, phoneNumber, role, password } = req.body;
+    const { id } = req.params;
+
+    const updateFields = { name, email, phoneNumber, role };
+
+    if (password) {
+      updateFields.password = await hashPassword(password);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
+      new: true,
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res
+      .status(200)
+      .json({ message: "User updated successfully.", user: updatedUser });
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).json({ error: "Failed to update user." });
+  }
+};
+
 module.exports = {
+  changePassword,
   register,
   login,
   logout,
   forgetPassword,
   resetPassword,
-  sendResetEmail,
+  sendResetEmail, // if used
   createUser,
   deleteUser,
+  updateUser,
 };

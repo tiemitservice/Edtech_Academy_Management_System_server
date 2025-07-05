@@ -2,7 +2,10 @@ const Server = require("socket.io");
 
 const io = new Server(5000, {
   cors: {
-    origin: "*", // You can restrict this in production
+    origin: "http://localhost:5173", // You can restrict this in production
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
 });
 

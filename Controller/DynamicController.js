@@ -18,6 +18,7 @@ const StudentPayment = require("../Models/StudentPayment");
 const StaffPermission = require("../Models/StaffPermission");
 const StaffAttendance = require("../Models/StaffAttendance");
 const Subject = require("../Models/Subject");
+const { verifyToken, hashPassword, comparePassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
@@ -1069,7 +1070,13 @@ const dynamicCrudController = (collection) => {
                 updatedData.room = null;
               }
             }
-
+            if (collection.toLowerCase() === "users") {
+              if (req.body.password && req.body.password.trim() !== "") {
+                updatedData.password = await hashPassword(req.body.password);
+              } else {
+                delete updatedData.password;
+              }
+            }
             const updatedItem = await model.findByIdAndUpdate(
               req.params.id,
               updatedData,
