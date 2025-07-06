@@ -22,6 +22,7 @@ const collections = [
   "staffpermissions",
   "staffattendances",
   "subjects",
+  "companies",
 ];
 
 collections.forEach((collection) => {

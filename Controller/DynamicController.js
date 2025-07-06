@@ -18,7 +18,8 @@ const StudentPayment = require("../Models/StudentPayment");
 const StaffPermission = require("../Models/StaffPermission");
 const StaffAttendance = require("../Models/StaffAttendance");
 const Subject = require("../Models/Subject");
-const { verifyToken, hashPassword, comparePassword } = require("./authHelper");
+const Company = require("../Models/Company");
+const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
@@ -70,6 +71,8 @@ const loadModel = (collection) => {
       return StaffAttendance;
     case "subjects":
       return Subject;
+    case "companies":
+      return Company;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
@@ -214,7 +217,13 @@ const dynamicCrudController = (collection) => {
               data.score = parseInt(req.body.score) || 0;
               data.attendance = parseInt(req.body.attendance) || 0;
             }
-
+            // ✅ Handle users
+            if (collection.toLowerCase() === "users") {
+              if (!data.password || data.password.trim() === "") {
+                return res.status(400).json({ error: "Password is required." });
+              }
+              data.password = await hashPassword(data.password);
+            }
             // Map uploaded file URLs to schema fields
             const fileData = {};
             if (req.files) {
@@ -392,7 +401,8 @@ const dynamicCrudController = (collection) => {
           query = model
             .find(queryConditions.length ? { $and: queryConditions } : {})
             .skip((pageNumber - 1) * limitNumber)
-            .limit(limitNumber);
+            .limit(limitNumber)
+            .lean();
 
           switch (collection.toLowerCase()) {
             case "staffs":
@@ -423,6 +433,11 @@ const dynamicCrudController = (collection) => {
               //   populate: ["position", "department"],
               // });
               break;
+            case "users":
+              const excludedFields = " -token";
+              query.select(excludedFields);
+              break;
+
             case "attendances":
               query
                 .populate("student_id", "eng_name")
