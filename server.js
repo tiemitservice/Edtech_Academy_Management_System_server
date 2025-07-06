@@ -18,8 +18,8 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    // origin: "http://localhost:5173",
-    origin: "https://edtech-academy-management-system-cl.vercel.app/",
+    origin: "http://localhost:5173",
+    // origin: "https://edtech-academy-management-system-cl.vercel.app/",
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   },
@@ -30,8 +30,8 @@ app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.set("io", io);
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-    origin: "https://edtech-academy-management-system-cl.vercel.app/",
+    origin: "http://localhost:5173",
+    // origin: "https://edtech-academy-management-system-cl.vercel.app/",
 
     credentials: true,
     allowedHeaders: ["Content-Type"],
