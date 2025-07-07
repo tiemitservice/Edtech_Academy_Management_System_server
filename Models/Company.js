@@ -31,6 +31,13 @@ const companySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    currencey: {
+      type: Number,
+      required: true,
+    },
+    invoice_logo: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

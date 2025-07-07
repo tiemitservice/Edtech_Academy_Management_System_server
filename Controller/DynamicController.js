@@ -19,13 +19,17 @@ const StaffPermission = require("../Models/StaffPermission");
 const StaffAttendance = require("../Models/StaffAttendance");
 const Subject = require("../Models/Subject");
 const Company = require("../Models/Company");
+const PaymentType = require("../Models/PaymentType");
+const CourseInvoice = require("../Models/CourseInvoce");
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
     if (
       field.instance === "String" &&
-      (fieldName === "image" || fieldName === "document_image")
+      (fieldName === "image" ||
+        fieldName === "document_image" ||
+        fieldName === "invoice_logo")
     ) {
       imageFields.push(fieldName);
     }
@@ -73,6 +77,10 @@ const loadModel = (collection) => {
       return Subject;
     case "companies":
       return Company;
+    case "paymenttypes":
+      return PaymentType;
+    case "courseinvoices":
+      return CourseInvoice;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;

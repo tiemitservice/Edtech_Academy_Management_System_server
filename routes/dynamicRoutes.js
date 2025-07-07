@@ -23,6 +23,8 @@ const collections = [
   "staffattendances",
   "subjects",
   "companies",
+  "paymenttypes",
+  "courseinvoices",
 ];
 
 collections.forEach((collection) => {

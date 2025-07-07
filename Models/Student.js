@@ -20,6 +20,14 @@ const studentSchema = new mongoose.Schema(
       ref: "Staff",
       required: false,
     },
+    payment_date: {
+      type: String,
+      required: false,
+    },
+    payment_type: {
+      type: String,
+      required: false,
+    },
 
     gender: {
       type: String,
