@@ -180,6 +180,13 @@ const studentSchema = new mongoose.Schema(
         required: false,
       },
     ],
+    buy_book: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Book",
+        required: false,
+      },
+    ],
     status: {
       type: Boolean,
       default: true,

@@ -25,6 +25,7 @@ const collections = [
   "companies",
   "paymenttypes",
   "courseinvoices",
+  "bookpayments",
 ];
 
 collections.forEach((collection) => {

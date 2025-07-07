@@ -41,10 +41,6 @@ const classSchema = new mongoose.Schema(
       },
     ],
 
-    staff: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Staff",
-    },
     room: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Room",
@@ -56,6 +52,10 @@ const classSchema = new mongoose.Schema(
     },
     day_class: {
       type: Array,
+    },
+    staff: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Staff",
     },
     duration: {
       type: mongoose.Schema.Types.ObjectId,
