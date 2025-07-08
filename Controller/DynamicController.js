@@ -22,6 +22,7 @@ const Company = require("../Models/Company");
 const PaymentType = require("../Models/PaymentType");
 const CourseInvoice = require("../Models/CourseInvoce");
 const BookPayment = require("../Models/BookPayment");
+const Discound = require("../Models/Discound");
 
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
@@ -85,6 +86,8 @@ const loadModel = (collection) => {
       return CourseInvoice;
     case "bookpayments":
       return BookPayment;
+    case "discounts":
+      return Discound;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
