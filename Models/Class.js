@@ -36,8 +36,6 @@ const classSchema = new mongoose.Schema(
           type: String,
           enum: ["present", "absent", "late", "permission"],
         },
-        payment_date: { type: String, default: "" },
-        payment_type: { type: String, default: "" },
       },
     ],
 

@@ -24,6 +24,10 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    next_payment_date: {
+      type: String,
+      required: false,
+    },
     payment_type: {
       type: String,
       required: false,
