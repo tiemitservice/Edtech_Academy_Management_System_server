@@ -27,6 +27,14 @@ const collections = [
   "courseinvoices",
   "bookpayments",
   "discounts",
+  // report
+  "markclassreports",
+  "remarkclassreports",
+  "scorereports",
+  "attendancereports",
+  "bookpaymentreports",
+  "studentpaymentreports",
+  "stockhistoryreports",
 ];
 
 collections.forEach((collection) => {

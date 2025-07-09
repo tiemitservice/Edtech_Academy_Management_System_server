@@ -23,7 +23,14 @@ const PaymentType = require("../Models/PaymentType");
 const CourseInvoice = require("../Models/CourseInvoce");
 const BookPayment = require("../Models/BookPayment");
 const Discound = require("../Models/Discound");
-
+// report
+const MarkClassReport = require("../Report/MarkClassReport");
+const RemarkClassReport = require("../Report/RemarkClassReport");
+const ScoreReport = require("../Report/ScoreReport");
+const AttendanceReport = require("../Report/AttendanceReport");
+const BookPaymentReport = require("../Report/BookPaymentReport");
+const StudentPaymentReport = require("../Report/StudentPaymentReport");
+const StockHistoryReport = require("../Report/StockHistoryReport");
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
@@ -88,6 +95,20 @@ const loadModel = (collection) => {
       return BookPayment;
     case "discounts":
       return Discound;
+    case "markclassreports":
+      return MarkClassReport;
+    case "remarkclassreports":
+      return RemarkClassReport;
+    case "scorereports":
+      return ScoreReport;
+    case "attendancereports":
+      return AttendanceReport;
+    case "bookpaymentreports":
+      return BookPaymentReport;
+    case "studentpaymentreports":
+      return StudentPaymentReport;
+    case "stockhistoryreports":
+      return StockHistoryReport;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
