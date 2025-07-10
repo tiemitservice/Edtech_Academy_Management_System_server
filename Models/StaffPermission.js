@@ -25,6 +25,10 @@ const staffPermissionSchema = new mongoose.Schema({
     enum: ["accepted", "rejected", "pending"],
     default: "pending",
   },
+  note: {
+    type: String,
+    required: false,
+  },
 });
 const staffPermission = mongoose.model(
   "StaffPermission",

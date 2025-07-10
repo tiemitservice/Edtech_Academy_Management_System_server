@@ -31,6 +31,12 @@ const AttendanceReport = require("../Report/AttendanceReport");
 const BookPaymentReport = require("../Report/BookPaymentReport");
 const StudentPaymentReport = require("../Report/StudentPaymentReport");
 const StockHistoryReport = require("../Report/StockHistoryReport");
+const StudentCompletePaymentReport = require("../Report/StudentCompletePaymentReport");
+const TeacherAttendanceReport = require("../Report/TeacherAttendanceReport");
+const TeacherPermissionReport = require("../Report/TeacherPermissionReport");
+const PromoteStudentReport = require("../Report/PromoteStudentReport");
+const StudentPermissionReport = require("../Report/StudentPermissionReport");
+
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
@@ -109,6 +115,16 @@ const loadModel = (collection) => {
       return StudentPaymentReport;
     case "stockhistoryreports":
       return StockHistoryReport;
+    case "studentcompletepaymentreports":
+      return StudentCompletePaymentReport;
+    case "teacherattendancereports":
+      return TeacherAttendanceReport;
+    case "teacherpermissionreports":
+      return TeacherPermissionReport;
+    case "promotestudentreports":
+      return PromoteStudentReport;
+    case "studentpermissionreports":
+      return StudentPermissionReport;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
