@@ -23,6 +23,8 @@ const PaymentType = require("../Models/PaymentType");
 const CourseInvoice = require("../Models/CourseInvoce");
 const BookPayment = require("../Models/BookPayment");
 const Discound = require("../Models/Discound");
+const StudentInvoiceGenerate = require("../Models/StudentInvoiceGenerate");
+const Holiday = require("../Models/Holiday");
 // report
 const MarkClassReport = require("../Report/MarkClassReport");
 const RemarkClassReport = require("../Report/RemarkClassReport");
@@ -36,6 +38,7 @@ const TeacherAttendanceReport = require("../Report/TeacherAttendanceReport");
 const TeacherPermissionReport = require("../Report/TeacherPermissionReport");
 const PromoteStudentReport = require("../Report/PromoteStudentReport");
 const StudentPermissionReport = require("../Report/StudentPermissionReport");
+const StudentTermReport = require("../Report/StudentTermReport");
 
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
@@ -125,6 +128,12 @@ const loadModel = (collection) => {
       return PromoteStudentReport;
     case "studentpermissionreports":
       return StudentPermissionReport;
+    case "studenttermreports":
+      return StudentTermReport;
+    case "studentinvoicegenerates":
+      return StudentInvoiceGenerate;
+    case "holidays":
+      return Holiday;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
@@ -134,26 +143,54 @@ const loadModel = (collection) => {
 const deletionDependencies = {
   staffs: [
     { model: Class, field: "staff" },
-    { model: Class, field: "staff._id" },
+    { model: TeacherAttendanceReport, field: "teacher_id" },
+    { model: TeacherPermissionReport, field: "approve_by" },
+    { model: StudentPermissionReport, field: "approve_by" },
   ],
   classes: [
-    { model: Staff, field: "staff._id" },
-    { model: Section, field: "duration" },
+    { model: StudentInvoiceGenerate, field: "course_id" },
+    { model: StudentPaymentReport, field: "course_id" },
+    { model: ScoreReport, field: "class_id" },
+    { model: AttendanceReport, field: "class_id" },
+    { model: MarkClassReport, field: "class_id" },
+    { model: PromoteStudentReport, field: "from_class_id" },
+    { model: PromoteStudentReport, field: "class_id" },
+    { model: StudentTermReport, field: "classes.class_id" },
   ],
-  books: [{ model: Student, field: "rental_book" }],
+  books: [
+    { model: Student, field: "rental_book" },
+    { model: BookPaymentReport, field: "book_id" },
+    { model: StockHistoryReport, field: "book_id" },
+  ],
   students: [
-    { model: Class, field: "students" },
-    { model: Class, field: "students._id" },
+    { model: Class, field: "students.student" },
     { model: Attendance, field: "student_id" },
+    { model: StudentInvoiceGenerate, field: "student_id" },
+    { model: StudentPaymentReport, field: "student_id" },
+    { model: ScoreReport, field: "student_id" },
+    { model: AttendanceReport, field: "students.student" },
+    { model: StudentCompletePaymentReport, field: "student_id" },
+    { model: StudentPermissionReport, field: "student_id" },
+    { model: PromoteStudentReport, field: "students.student" },
+    { model: StudentTermReport, field: "student_id" },
   ],
   positions: [{ model: Staff, field: "position" }],
   departments: [{ model: Staff, field: "department" }],
-  sections: [{ model: Class, field: "duration" }],
+  sections: [
+    { model: Class, field: "duration" },
+    { model: ScoreReport, field: "duration" },
+    { model: AttendanceReport, field: "duration" },
+  ],
   book_categories: [{ model: Book, field: "bookType" }],
   rooms: [{ model: Class, field: "room" }],
-  subjects: [{ model: Class, field: "subject" }],
+  subjects: [
+    { model: Class, field: "subject" },
+    { model: ScoreReport, field: "subject_id" },
+    { model: AttendanceReport, field: "subject_id" },
+    { model: MarkClassReport, field: "subject_id" },
+  ],
+  holidays: [{ model: Class, field: "holiday" }],
 };
-
 const dynamicCrudController = (collection) => {
   const model = loadModel(collection);
   if (!model) return null;
@@ -845,6 +882,7 @@ const dynamicCrudController = (collection) => {
                 "mark_as_completed",
                 "status",
                 "subject",
+                "holiday",
               ];
 
               Object.keys(updatedData).forEach((key) => {
@@ -1083,6 +1121,7 @@ const dynamicCrudController = (collection) => {
                 "status",
                 "mark_as_completed",
                 "subject",
+                "holiday",
               ];
               Object.keys(updatedData).forEach((key) => {
                 if (!allowedFields.includes(key)) {

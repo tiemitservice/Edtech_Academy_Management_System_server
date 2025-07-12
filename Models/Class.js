@@ -67,6 +67,10 @@ const classSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    holiday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Holiday",
+    },
   },
   { timestamps: true }
 );

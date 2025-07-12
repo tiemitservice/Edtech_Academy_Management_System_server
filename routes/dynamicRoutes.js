@@ -40,6 +40,9 @@ const collections = [
   "teacherpermissionreports",
   "promotestudentreports",
   "studentpermissionreports",
+  "studenttermreports",
+  "studentinvoicegenerates",
+  "holidays",
 ];
 
 collections.forEach((collection) => {

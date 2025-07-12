@@ -29,6 +29,10 @@ const bookInvoiceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  transaction: {
+    type: String,
+    required: false,
+  },
 });
 
 module.exports = mongoose.model("BookInvoice", bookInvoiceSchema);

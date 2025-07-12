@@ -1,15 +1,17 @@
-const mongoose = require('mongoose');
-const holidaySchema = new mongoose.Schema({
+const mongoose = require("mongoose");
+const holidaySchema = new mongoose.Schema(
+  {
     year: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
     holidays: {
-        type: Array,
-        required: true
+      type: Array,
+      required: true,
     },
-
-}, { timestamps: true });
-const Holiday = mongoose.model('Holiday', holidaySchema);
+  },
+  { timestamps: true }
+);
+const Holiday = mongoose.model("Holiday", holidaySchema);
 module.exports = Holiday;

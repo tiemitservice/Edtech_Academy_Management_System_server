@@ -28,6 +28,9 @@ const studentPermissionSchema = new mongoose.Schema({
     type: String,
     default: "pending",
   },
+  created_by: {
+    type: String,
+  },
 });
 
 const StudentPermission = mongoose.model(
