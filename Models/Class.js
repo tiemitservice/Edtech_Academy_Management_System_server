@@ -39,10 +39,10 @@ const classSchema = new mongoose.Schema(
       },
     ],
 
-    // room: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Room",
-    // },
+    room: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
+    },
     // subject
     subject: {
       type: mongoose.Schema.Types.ObjectId,
