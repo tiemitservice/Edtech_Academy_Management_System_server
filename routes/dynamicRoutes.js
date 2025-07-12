@@ -43,6 +43,7 @@ const collections = [
   "studenttermreports",
   "studentinvoicegenerates",
   "holidays",
+  "feedbacks",
 ];
 
 collections.forEach((collection) => {
