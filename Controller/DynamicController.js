@@ -41,6 +41,7 @@ const StudentPermissionReport = require("../Report/StudentPermissionReport");
 const StudentTermReport = require("../Report/StudentTermReport");
 const Feedback = require("../Models/feedback");
 const ScoreReportCompleted = require("../Report/StudentCompletedScore");
+const StudentPaymentTracking = require("../Models/StudentPaymentTracking");
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
@@ -139,6 +140,8 @@ const loadModel = (collection) => {
       return Feedback;
     case "scorereportcompleteds":
       return ScoreReportCompleted;
+    case "trackingspayments":
+      return StudentPaymentTracking;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
@@ -358,7 +361,7 @@ const dynamicCrudController = (collection) => {
       try {
         const {
           page = 1,
-          limit = 10,
+          limit = 1000,
           searchColumn = [],
           ...filters
         } = req.query;

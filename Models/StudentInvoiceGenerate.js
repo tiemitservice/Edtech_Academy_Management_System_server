@@ -54,6 +54,10 @@ const studentInvoiceGenerateSchema = new mongoose.Schema(
     transaction: {
       type: String,
     },
+    mark_as_completed: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

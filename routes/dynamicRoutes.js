@@ -45,6 +45,7 @@ const collections = [
   "holidays",
   "feedbacks",
   "scorereportcompleteds",
+  "trackingspayments",
 ];
 
 collections.forEach((collection) => {
