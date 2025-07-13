@@ -25,6 +25,10 @@ const studentPaymentReportSchema = new mongoose.Schema({
     type: Number,
     required: false,
   },
+  payment_type: {
+    type: String,
+    required: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

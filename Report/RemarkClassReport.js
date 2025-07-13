@@ -8,6 +8,17 @@ const RemarkClassReportSchema = new mongoose.Schema({
       ref: "Student",
       required: true,
     },
+    {
+      attendance_score: { type: Number, default: 0, min: 0, max: 100 },
+      class_practice: { type: Number, default: 0, min: 0, max: 5 },
+      home_work: { type: Number, default: 0, min: 0, max: 5 },
+      assignment_score: { type: Number, default: 0, min: 0, max: 12 },
+      presentation: { type: Number, default: 0, min: 0, max: 13 },
+      revision_test: { type: Number, default: 0 },
+      final_exam: { type: Number, default: 0, min: 0, max: 30 },
+      total_score: { type: Number, default: 0 },
+      work_book: { type: Number, default: 0, min: 0, max: 10 }, // { type: String, default: 0, min: 0, max: 10 },
+    },
   ],
   class_id: {
     type: mongoose.Schema.Types.ObjectId,

@@ -40,7 +40,7 @@ const PromoteStudentReport = require("../Report/PromoteStudentReport");
 const StudentPermissionReport = require("../Report/StudentPermissionReport");
 const StudentTermReport = require("../Report/StudentTermReport");
 const Feedback = require("../Models/feedback");
-
+const ScoreReportCompleted = require("../Report/StudentCompletedScore");
 const { hashPassword } = require("./authHelper");
 const getImageFields = (schema) => {
   const imageFields = [];
@@ -137,6 +137,8 @@ const loadModel = (collection) => {
       return Holiday;
     case "feedbacks":
       return Feedback;
+    case "scorereportcompleteds":
+      return ScoreReportCompleted;
     default:
       console.error(`Model for collection "${collection}" not found.`);
       return null;
