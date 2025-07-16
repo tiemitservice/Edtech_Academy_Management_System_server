@@ -523,9 +523,9 @@ const dynamicCrudController = (collection) => {
           // Population logic (Identical to your original code)
           switch (collection.toLowerCase()) {
             case "staffs":
-              query
-                .populate({ path: "position" })
-                .populate({ path: "department" });
+              // query
+              //   .populate({ path: "position" })
+              //   .populate({ path: "department" });
               break;
             case "classes":
               query.populate("students.student").populate({
