@@ -1,46 +1,57 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const dynamicRoute = require("./routes/dynamicRoutes");
-const autheRouter = require("./routes/userRoutes");
-const currentRoute = require("./Auth/currentUserRoute");
+// --- FIX: Correctly import the cors library ---
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+
+// Import your routes and cron jobs
+const dynamicRoute = require("./routes/dynamicRoutes");
+const autheRouter = require("./routes/userRoutes");
+const currentRoute = require("./Auth/currentUserRoute");
 require("./Controller/Cron");
 
-// Initialize express app
+// --- INITIALIZATION ---
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO
+// --- CORS CONFIGURATION ---
+// It's good practice to define your CORS options in a variable
+const corsOptions = {
+  origin: "http://localhost:5173",
+  // In production, you would use your deployed frontend URL:
+  // origin: "https://edtech-academy-management-system-cl.vercel.app/",
+  credentials: true,
+};
+
+// --- SOCKET.IO INITIALIZATION ---
 const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    // origin: "https://edtech-academy-management-system-cl.vercel.app/",
-    methods: ["GET", "POST", "PATCH", "DELETE"],
-    credentials: true,
-  },
+  cors: corsOptions, // Reuse the same CORS options
 });
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ limit: "5mb", extended: true }));
+
 // Attach io to app for use in controllers
 app.set("io", io);
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    // origin: "https://edtech-academy-management-system-cl.vercel.app/",
 
-    credentials: true,
-    allowedHeaders: ["Content-Type"],
-  })
-);
-app.use(express.json());
+// --- MIDDLEWARE SETUP ---
+// **IMPORTANT**: The order of middleware is critical.
+
+// 1. CORS Middleware - This should come first!
+// This allows your server to accept cross-origin requests.
+app.use(cors(corsOptions));
+
+// 2. Body Parsers
+// These parse incoming request bodies.
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
+
+// 3. Static File Serving
+// This serves files from your 'Uploads' directory.
 app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 
-// MongoDB connection
+// --- DATABASE CONNECTION ---
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
@@ -49,20 +60,21 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
-// Routes
+// --- API ROUTES ---
+// All your API routes should be defined after the core middleware.
 app.get("/", (req, res) => {
-  res.send("Hello World");
+  res.send("Hello World from your server!");
 });
 app.use("/api", dynamicRoute);
 app.use("/api", autheRouter);
 app.use("/api", currentRoute);
 
-// Socket.IO connection
+// --- SOCKET.IO EVENT HANDLERS ---
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
   socket.on("join", (collection) => {
-    console.log(`Client joined room: ${collection}`);
+    console.log(`Client ${socket.id} joined room: ${collection}`);
     socket.join(collection);
   });
 
@@ -76,7 +88,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Start server
+// --- SERVER STARTUP ---
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

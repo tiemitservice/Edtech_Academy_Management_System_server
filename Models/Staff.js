@@ -8,7 +8,7 @@ const staffSchema = new mongoose.Schema(
     workday: { type: Array, required: false },
     gender: { type: String, required: true },
     phoneNumber: { type: String, required: true, unique: true },
-    role: { type: String, required: true },
+    role: { type: String, required: false },
     date_intered: { type: Date, default: Date.now },
     status: { type: Boolean, required: true, default: true },
     image: { type: String },
