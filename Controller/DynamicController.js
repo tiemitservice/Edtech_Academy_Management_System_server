@@ -534,7 +534,7 @@ const dynamicCrudController = (collection) => {
               });
               break;
             case "books":
-              query.populate("bookType", "name");
+              // query.populate("bookType", "name");
               break;
             case "rooms":
               query.populate("section").populate("booked_by");

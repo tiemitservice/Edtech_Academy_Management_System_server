@@ -18,6 +18,7 @@ const sectionSchema = new mongoose.Schema(
     duration: {
       type: String,
       required: true,
+      unique: true,
     },
     status: {
       type: Boolean,
