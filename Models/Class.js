@@ -30,6 +30,8 @@ const classSchema = new mongoose.Schema(
         // exit_time: { type: String, default: "" },
         // entry_time: { type: String, default: "" },
         comments: { type: String, enum: ["passed", "failed"] },
+
+        // check student attendance
         checking_at: { type: String },
         attendance: {
           type: String,
