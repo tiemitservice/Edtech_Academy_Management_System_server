@@ -36,7 +36,6 @@ const classSchema = new mongoose.Schema(
         attendance: {
           type: String,
           enum: ["present", "absent", "late", "permission"],
-          default: "uncheck",
         },
       },
     ],
