@@ -49,7 +49,7 @@ mongoose
 
 // --- API ROUTES ---
 app.get("/", (req, res) => {
-  res.send("Hello World from your server!");
+  res.send("Hello World !");
 });
 app.use("/api", dynamicRoute);
 app.use("/api", autheRouter);
