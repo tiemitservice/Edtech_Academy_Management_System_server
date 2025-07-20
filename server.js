@@ -21,7 +21,10 @@ const server = http.createServer(app);
 // --- CORS CONFIGURATION ---
 // It's good practice to define your CORS options in a variable
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://188.166.242.109"],
+  origin: [
+    // "http://localhost:5173",
+    "http://188.166.242.109",
+  ],
   credentials: true,
 };
 
