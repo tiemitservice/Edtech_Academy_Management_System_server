@@ -21,9 +21,7 @@ const server = http.createServer(app);
 // --- CORS CONFIGURATION ---
 // It's good practice to define your CORS options in a variable
 const corsOptions = {
-  origin: "http://localhost:5173",
-  // In production, you would use your deployed frontend URL:
-  // origin: "https://edtech-academy-management-system-cl.vercel.app/",
+  origin: ["http://localhost:5173", "http://188.166.242.109"],
   credentials: true,
 };
 
