@@ -7,7 +7,7 @@ const socket = io(API_URL, {
   autoConnect: false, // Connect manually in onMounted
   transports: ["websocket"], // Ensure WebSocket transport
   cors: {
-    origin: "http://188.166.242.109:5173", // Match your Vue.js frontend
+    origin: "http://188.166.242.109", // Match your Vue.js frontend
   },
 });
 
