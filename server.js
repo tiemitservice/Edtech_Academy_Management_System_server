@@ -17,30 +17,18 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// --- DYNAMIC CORS CONFIGURATION ---
-const allowedOrigins = [
-  "http://188.166.242.109", // Production frontend
-  "http://localhost:5173", // Local development
-];
-
+// --- REVAMPED CORS CONFIGURATION ---
+// Using a wildcard origin. WARNING: Less secure.
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g., curl, Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
+  origin: "*",
+  credentials: false, // MUST be false when origin is "*"
 };
 
 // --- SOCKET.IO INITIALIZATION ---
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    credentials: true,
+    origin: "*", // Using wildcard here as well
+    credentials: false,
   },
 });
 
