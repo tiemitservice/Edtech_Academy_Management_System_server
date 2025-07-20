@@ -52,13 +52,14 @@ app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 
 // --- DATABASE CONNECTION ---
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log("MongoDB connection error:", err));
+// mongoose
+//   .connect(process.env.MONGO_URI, {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//   })
+//   .then(() => console.log("MongoDB connected"))
+//   .catch((err) => console.log("MongoDB connection error:", err));
+mongoose.connect(process.env.MONGO_URI);
 
 // --- API ROUTES ---
 // All your API routes should be defined after the core middleware.

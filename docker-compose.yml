@@ -1,22 +1,12 @@
+# docker-compose.yml
+
 version: "3.8"
 
 services:
   app:
     build: .
     ports:
-      - "5000:5000"
+      - "5000:5000" # Map port 5000 on the server to port 5000 in the container
     env_file:
-      - ./.env # Loads variables from the .env file
-    depends_on:
-      - mongodb
+      - ./.env      # Load environment variables from the .env file
     restart: unless-stopped
-
-  mongodb:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-
-volumes:
-  mongodb_data:
