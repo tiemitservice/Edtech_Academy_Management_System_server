@@ -307,9 +307,10 @@ const sendResetEmail = async (email, name, resetToken) => {
                       <p>We received a request to reset the password for your account. If you did not make this request, you can safely ignore this email.</p>
                       <p>To reset your password, please click the button below. This link will expire in 1 hour.</p>
                   </div>
-              
+                  <a href="\${resetLink}" class="cta-button">Reset Your Password</a>
                   <div class="content-block">
                       <p>If you're having trouble with the button, you can also copy and paste this link into your browser:</p>
+                      // <p style="word-break: break-all; font-size: 12px; color: #555;"><a href="\${resetLink}" style="color: #4A90E2;">\${resetLink}</a></p>
                   </div>
               </div>
               <div class="email-footer">
