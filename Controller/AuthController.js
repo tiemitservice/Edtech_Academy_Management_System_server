@@ -1,8 +1,10 @@
-const nodemailer = require("nodemailer"); // Import nodemailer
+// const nodemailer = require("nodemailer"); // Import nodemailer
 const User = require("../Models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { Resend } = require("resend");
+
 const { verifyToken, hashPassword, comparePassword } = require("./authHelper");
 
 /**
@@ -206,131 +208,210 @@ const logout = (req, res) => {
   res.status(200).json({ message: "Logout successful." });
 };
 
+// const sendResetEmail = async (email, name, resetToken) => {
+//   console.log("Reset token in sendResetEmail:", resetToken); // Log the token for debugging
+
+//   // const transporter = nodemailer.createTransport({
+//   //   service: "Gmail",
+//   //   auth: {
+//   //     user: process.env.EMAIL_USER,
+//   //     pass: process.env.EMAIL_PASS,
+//   //   },
+//   // });
+//   const transporter = nodemailer.createTransport({
+//     host: "smtp.gmail.com",
+//     port: 587,
+//     secure: true, // ✅ true for SSL
+//     auth: {
+//       user: process.env.EMAIL_USER,
+//       pass: process.env.EMAIL_PASS,
+//     },
+//   });
+
+//   const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+//   console.log("Reset link:", resetLink); // Log the reset link for debugging
+
+//   const mailOptions = {
+//     from: process.env.EMAIL_USER,
+//     to: email,
+//     subject: "Password Reset Request",
+//     html: `
+//          <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//     <meta charset="UTF-8">
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//     <title>Password Reset</title>
+//     <style>
+//         body {
+//             font-family: Arial, sans-serif;
+//             background-color: #f0f2f5;
+//             display: flex;
+//             justify-content: center;
+//             align-items: center;
+//             height: 100vh;
+//             margin: 0;
+//         }
+//         .container {
+//             background-color: white;
+//             padding: 2rem;
+//             border-radius: 8px;
+//             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+//             width: 100%;
+//             max-width: 400px;
+//         }
+//         h1 {
+//             color: #333;
+//             text-align: center;
+//             margin-bottom: 1.5rem;
+//         }
+//         form {
+//             display: flex;
+//             flex-direction: column;
+//         }
+//         label {
+//             margin-bottom: 0.5rem;
+//             color: #555;
+//         }
+//         input[type="email"] {
+//             padding: 0.75rem;
+//             margin-bottom: 1rem;
+//             border: 1px solid #ddd;
+//             border-radius: 4px;
+//             font-size: 1rem;
+//         }
+//         button {
+//             background-color: #3498db;
+//             color: white;
+//             padding: 0.75rem;
+//             border: none;
+//             border-radius: 4px;
+//             font-size: 1rem;
+//             cursor: pointer;
+//             transition: background-color 0.3s ease;
+//         }
+//         button:hover {
+//             background-color: #2980b9;
+//         }
+//         .message {
+//             margin-top: 1rem;
+//             text-align: center;
+//             color: #555;
+//         }
+//         .reset-link {
+//             display: inline-block;
+//             background-color: #0A008E;
+//             color: white;
+//             text-decoration: none;
+//             padding: 12px 24px;
+//             border-radius: 5px;
+//             font-weight: bold;
+//             margin-top: 1rem;
+//         }
+//         @media (max-width: 480px) {
+//             .container {
+//                 padding: 1rem;
+//             }
+//         }
+//     </style>
+// </head>
+// <body>
+//     <div class="container">
+//         <h1>Password Reset</h1>
+
+//         <div class="message">
+//             <p>Hello ${name},</p>
+//             <p>You requested a password reset. Click the button below to reset your password:</p>
+//             <a href="${resetLink}" class="reset-link" style='color:white;'>Reset Password</a>
+//         </div>
+//     </div>
+// </body>
+// </html>
+//         `,
+//   };
+
+//   await transporter.sendMail(mailOptions);
+// };
+
 const sendResetEmail = async (email, name, resetToken) => {
-  console.log("Reset token in sendResetEmail:", resetToken); // Log the token for debugging
-
-  // const transporter = nodemailer.createTransport({
-  //   service: "Gmail",
-  //   auth: {
-  //     user: process.env.EMAIL_USER,
-  //     pass: process.env.EMAIL_PASS,
-  //   },
-  // });
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // ✅ true for SSL
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
+  // 1. Initialize Resend with your API Key
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-  console.log("Reset link:", resetLink); // Log the reset link for debugging
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Password Reset Request",
-    html: `
-         <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 2rem;  
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-bottom: 0.5rem;
-            color: #555;
-        }
-        input[type="email"] {
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .message {
-            margin-top: 1rem;
-            text-align: center;
-            color: #555;
-        }
-        .reset-link {
-            display: inline-block;
-            background-color: #0A008E;
-            color: white;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-top: 1rem;
-        }
-        @media (max-width: 480px) {
-            .container {
-                padding: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Password Reset</h1>
+  try {
+    // 2. Send the email using the Resend API
+    await resend.emails.send({
+      from: "My App <onboarding@resend.dev>", // Use Resend's default for now
+      to: email,
+      subject: "Password Reset Request",
+      // 3. Use the same beautiful HTML template you already had
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Password Reset</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f0f2f5;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                }
+                .container {
+                    background-color: white;
+                    padding: 2rem;  
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    width: 100%;
+                    max-width: 400px;
+                }
+                h1 {
+                    color: #333;
+                    text-align: center;
+                    margin-bottom: 1.5rem;
+                }
+                .message {
+                    margin-top: 1rem;
+                    text-align: center;
+                    color: #555;
+                }
+                .reset-link {
+                    display: inline-block;
+                    background-color: #0A008E;
+                    color: white;
+                    text-decoration: none;
+                    padding: 12px 24px;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    margin-top: 1rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Password Reset</h1>
+                <div class="message">
+                    <p>Hello ${name},</p>
+                    <p>You requested a password reset. Click the button below to reset your password:</p>
+                    <a href="${resetLink}" class="reset-link" style="color:white;">Reset Password</a>
+                </div>
+            </div>
+        </body>
+        </html>
+      `,
+    });
 
-        <div class="message">
-            <p>Hello ${name},</p>
-            <p>You requested a password reset. Click the button below to reset your password:</p>
-            <a href="${resetLink}" class="reset-link" style='color:white;'>Reset Password</a>
-        </div>
-    </div>
-</body>
-</html>
-        `,
-  };
-
-  await transporter.sendMail(mailOptions);
+    console.log(`Resend email sent successfully to ${email}`);
+  } catch (error) {
+    console.error("Error sending Resend email:", error);
+    throw error; // Pass the error up to the calling function
+  }
 };
-
 const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
