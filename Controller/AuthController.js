@@ -225,98 +225,103 @@ const sendResetEmail = async (email, name, resetToken) => {
     to: email,
     subject: "Password Reset Request",
     html: `
-         <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 2rem;  
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-bottom: 0.5rem;
-            color: #555;
-        }
-        input[type="email"] {
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .message {
-            margin-top: 1rem;
-            text-align: center;
-            color: #555;
-        }
-        .reset-link {
-            display: inline-block;
-            background-color: #3498db;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-top: 1rem;
-        }
-        @media (max-width: 480px) {
-            .container {
-                padding: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Password Reset</h1>
-
-        <div class="message">
-            <p>Hello ${name},</p>
-            <p>You requested a password reset. Click the button below to reset your password:</p>
-            <a href="${resetLink}" class="reset-link">Reset Password</a>
-        </div>
-    </div>
-</body>
-</html>
-        `,
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Password Reset Request</title>
+          <style>
+              /* General Styles */
+              body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+                  background-color: #f4f4f7;
+              }
+              .email-container {
+                  max-width: 600px;
+                  margin: 40px auto;
+                  background-color: #ffffff;
+                  border-radius: 12px;
+                  overflow: hidden;
+                  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                  border: 1px solid #e8e8e8;
+              }
+              .email-header {
+                  background-color: #4A90E2; /* A nice, professional blue */
+                  color: #ffffff;
+                  padding: 30px;
+                  text-align: center;
+              }
+              .email-header h1 {
+                  margin: 0;
+                  font-size: 28px;
+                  font-weight: 600;
+              }
+              .email-body {
+                  padding: 30px 40px;
+                  font-size: 16px;
+                  line-height: 1.6;
+                  color: #333333;
+              }
+              .email-body p {
+                  margin: 0 0 1em 0;
+              }
+              .cta-button {
+                  display: block;
+                  width: fit-content;
+                  background-color: #4A90E2;
+                  color: #ffffff;
+                  text-decoration: none;
+                  padding: 14px 28px;
+                  border-radius: 8px;
+                  font-weight: bold;
+                  margin: 30px auto;
+                  text-align: center;
+                  font-size: 16px;
+              }
+              .email-footer {
+                  background-color: #f4f4f7;
+                  padding: 20px 40px;
+                  text-align: center;
+                  font-size: 12px;
+                  color: #888888;
+              }
+              .email-footer p {
+                  margin: 0 0 5px 0;
+              }
+              .content-block {
+                  text-align: left;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="email-container">
+              <div class="email-header">
+                  <h1>Password Reset</h1>
+              </div>
+              <div class="email-body">
+                  <div class="content-block">
+                    
+                      <p>We received a request to reset the password for your account. If you did not make this request, you can safely ignore this email.</p>
+                      <p>To reset your password, please click the button below. This link will expire in 1 hour.</p>
+                  </div>
+              
+                  <div class="content-block">
+                      <p>If you're having trouble with the button, you can also copy and paste this link into your browser:</p>
+                  </div>
+              </div>
+              <div class="email-footer">
+                  <p>&copy; ${new Date().getFullYear()}  អ៊ែដធិច អាខាឌីមី ( ប៊ីធីប៊ី ). All rights reserved.</p>
+                  <p>
+                    Battambang Cambodia
+                  </p>
+              </div>
+          </div>
+      </body>
+      </html>
+    `,
   };
 
   await transporter.sendMail(mailOptions);
