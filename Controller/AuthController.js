@@ -135,6 +135,14 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
+    // *** IMPORTANT: CHECK USER STATUS HERE ***
+    // If the user's status is not true (meaning it's false or not set), block the login.
+    if (user.status !== true) {
+      return res.status(403).json({
+        error: "Your account is inactive. Please contact an administrator.",
+      });
+    }
+
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid email or password." });
@@ -341,7 +349,7 @@ const sendResetEmail = async (email, name, resetToken) => {
   try {
     // 2. Send the email using the Resend API
     await resend.emails.send({
-      from: "My App <onboarding@resend.dev>", // Use Resend's default for now
+      from: "EdTeach Accademy <onboarding@resend.dev>", // Use Resend's default for now
       to: email,
       subject: "Password Reset Request",
       // 3. Use the same beautiful HTML template you already had

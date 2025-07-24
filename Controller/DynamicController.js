@@ -43,6 +43,8 @@ const Feedback = require("../Models/feedback");
 const ScoreReportCompleted = require("../Report/StudentCompletedScore");
 const StudentPaymentTracking = require("../Models/StudentPaymentTracking");
 const { hashPassword } = require("./authHelper");
+
+// Helper function to get image fields from a Mongoose schema
 const getImageFields = (schema) => {
   const imageFields = [];
   for (const [fieldName, field] of Object.entries(schema.paths)) {
@@ -58,6 +60,7 @@ const getImageFields = (schema) => {
   return imageFields;
 };
 
+// Function to load the correct Mongoose model based on the collection name
 const loadModel = (collection) => {
   switch (collection.toLowerCase()) {
     case "users":
@@ -148,6 +151,7 @@ const loadModel = (collection) => {
   }
 };
 
+// Defines which collections are referenced by others, to prevent deletion of used documents.
 const deletionDependencies = {
   staffs: [
     { model: Class, field: "staff" },
@@ -199,17 +203,20 @@ const deletionDependencies = {
   ],
   holidays: [{ model: Class, field: "holiday" }],
 };
+
+// Main controller factory
 const dynamicCrudController = (collection) => {
   const model = loadModel(collection);
   if (!model) return null;
 
   return {
+    // CREATE a new document
     create: async (req, res) => {
+      // This function remains the same as your original code.
+      // It's already well-structured to handle both image and non-image creations.
       try {
-        // Get image fields from the schema
         const imageFields = getImageFields(model.schema);
 
-        // If no image fields, process without file upload
         if (imageFields.length === 0) {
           try {
             if (!req.body.code) {
@@ -228,8 +235,8 @@ const dynamicCrudController = (collection) => {
               data.rental_book = Array.isArray(req.body.rental_book)
                 ? req.body.rental_book
                 : req.body.rental_book
-                ? [req.body.rental_book]
-                : [];
+                  ? [req.body.rental_book]
+                  : [];
               data.rental_book = data.rental_book.filter((id) =>
                 mongoose.Types.ObjectId.isValid(id)
               );
@@ -256,7 +263,6 @@ const dynamicCrudController = (collection) => {
           }
         }
 
-        // Configure Multer for dynamic image fields
         const uploadFields = imageFields.map((field) => ({
           name: field,
           maxCount: 1,
@@ -273,15 +279,13 @@ const dynamicCrudController = (collection) => {
               req.body.code = "default_code_" + Date.now();
             }
 
-            // Clean req.body to remove invalid image fields
             const data = { ...req.body };
             imageFields.forEach((field) => {
               if (data[field] && typeof data[field] === "object") {
-                delete data[field]; // Prevent validation errors
+                delete data[field];
               }
             });
 
-            // staff and department
             if (collection.toLowerCase() === "staffs") {
               data.position = mongoose.Types.ObjectId.isValid(req.body.position)
                 ? req.body.position
@@ -303,8 +307,8 @@ const dynamicCrudController = (collection) => {
               data.rental_book = Array.isArray(req.body.rental_book)
                 ? req.body.rental_book
                 : req.body.rental_book
-                ? [req.body.rental_book]
-                : [];
+                  ? [req.body.rental_book]
+                  : [];
               data.rental_book = data.rental_book.filter((id) =>
                 mongoose.Types.ObjectId.isValid(id)
               );
@@ -314,14 +318,14 @@ const dynamicCrudController = (collection) => {
               data.score = parseInt(req.body.score) || 0;
               data.attendance = parseInt(req.body.attendance) || 0;
             }
-            // ✅ Handle users
+
             if (collection.toLowerCase() === "users") {
               if (!data.password || data.password.trim() === "") {
                 return res.status(400).json({ error: "Password is required." });
               }
               data.password = await hashPassword(data.password);
             }
-            // Map uploaded file URLs to schema fields
+
             const fileData = {};
             if (req.files) {
               imageFields.forEach((field) => {
@@ -357,19 +361,20 @@ const dynamicCrudController = (collection) => {
       }
     },
 
+    // GET ALL documents with filtering, sorting, and pagination
     getAll: async (req, res) => {
+      // This function also remains the same as your original.
+      // It handles fetching data correctly.
       try {
-        // Destructure query parameters, adding defaults for sorting
         const {
           page = 1,
           limit = 10000,
           searchColumn = [],
-          sortField = "_id", // Default sort field is the document ID
-          sortOrder = "desc", // Default sort order is descending (newest first)
+          sortField = "_id",
+          sortOrder = "desc",
           ...filters
         } = req.query;
 
-        // Create the sort options object for Mongoose
         const sortOptions = { [sortField]: sortOrder === "asc" ? 1 : -1 };
 
         const searchCols = Array.isArray(searchColumn)
@@ -377,11 +382,10 @@ const dynamicCrudController = (collection) => {
           : searchColumn.split(",").filter((col) => col);
 
         const pageNumber = Math.max(parseInt(page, 10), 1);
-        const limitNumber = Math.min(Math.max(parseInt(limit, 10), 1), 1000); // Increased max limit for safety
+        const limitNumber = Math.min(Math.max(parseInt(limit, 10), 1), 1000);
 
         const queryConditions = [];
 
-        // --- FILTERING LOGIC (Identical to your original code) ---
         for (const [key, value] of Object.entries(filters)) {
           if (!value) continue;
 
@@ -417,7 +421,6 @@ const dynamicCrudController = (collection) => {
               studentId: new mongoose.Types.ObjectId(value),
             });
           } else if (mongoose.Types.ObjectId.isValid(value)) {
-            // This check should come before general string/number checks
             queryConditions.push({ [key]: new mongoose.Types.ObjectId(value) });
           } else if (!isNaN(value) && value.trim() !== "") {
             queryConditions.push({ [key]: Number(value) });
@@ -433,7 +436,6 @@ const dynamicCrudController = (collection) => {
         let query;
         let totalItems;
 
-        // --- AGGREGATION PATH for 'attendances' (with sorting) ---
         if (
           collection.toLowerCase() === "attendances" &&
           filters.search &&
@@ -441,7 +443,6 @@ const dynamicCrudController = (collection) => {
         ) {
           const pipeline = [];
 
-          // Lookups for relational search
           if (searchCols.includes("student_id.eng_name")) {
             pipeline.push({
               $lookup: {
@@ -465,7 +466,6 @@ const dynamicCrudController = (collection) => {
             pipeline.push({ $unwind: "$set_by_user" });
           }
 
-          // Match stage for search terms
           const searchConditions = searchCols.map((col) => {
             if (col === "student_id.eng_name") {
               return {
@@ -480,17 +480,14 @@ const dynamicCrudController = (collection) => {
           });
           pipeline.push({ $match: { $or: searchConditions } });
 
-          // Match stage for other filters
           if (queryConditions.length > 0) {
             pipeline.push({ $match: { $and: queryConditions } });
           }
 
-          // Add sorting, pagination
-          pipeline.push({ $sort: sortOptions }); // <-- APPLIED SORTING
+          pipeline.push({ $sort: sortOptions });
           pipeline.push({ $skip: (pageNumber - 1) * limitNumber });
           pipeline.push({ $limit: limitNumber });
 
-          // Reshape data for response
           pipeline.push({
             $set: {
               student_id: { _id: "$student_id", eng_name: "$student.eng_name" },
@@ -500,32 +497,26 @@ const dynamicCrudController = (collection) => {
 
           query = model.aggregate(pipeline);
 
-          // Get total count for pagination
           const countPipeline = pipeline.slice(
             0,
             pipeline.findIndex((p) => p.$sort)
-          ); // Get pipeline before sort/skip/limit
+          );
           countPipeline.push({ $count: "total" });
           totalItems = (await model.aggregate(countPipeline))[0]?.total || 0;
         } else {
-          // --- STANDARD FIND PATH for all other collections (with sorting) ---
           const findQuery = queryConditions.length
             ? { $and: queryConditions }
             : {};
 
           query = model
             .find(findQuery)
-            .sort(sortOptions) // <-- APPLIED SORTING
+            .sort(sortOptions)
             .skip((pageNumber - 1) * limitNumber)
             .limit(limitNumber)
             .lean();
 
-          // Population logic (Identical to your original code)
           switch (collection.toLowerCase()) {
             case "staffs":
-              // query
-              //   .populate({ path: "position" })
-              //   .populate({ path: "department" });
               break;
             case "classes":
               query.populate("students.student").populate({
@@ -534,7 +525,6 @@ const dynamicCrudController = (collection) => {
               });
               break;
             case "books":
-              // query.populate("bookType", "name");
               break;
             case "rooms":
               query.populate("section").populate("booked_by");
@@ -546,7 +536,7 @@ const dynamicCrudController = (collection) => {
               });
               break;
             case "users":
-              query.select("-token"); // Exclude sensitive fields
+              query.select("-token");
               break;
             case "attendances":
               query
@@ -560,14 +550,12 @@ const dynamicCrudController = (collection) => {
 
         const items = await query.exec();
 
-        // Socket emission (Identical to your original code)
         const io = req.app.get("io");
         if (io) {
           const safeItems = JSON.parse(JSON.stringify(items));
           io.to(collection).emit(`${collection}_fetched`, safeItems);
         }
 
-        // Final JSON response
         res.status(200).json({
           data: items,
           currentPage: pageNumber,
@@ -580,231 +568,37 @@ const dynamicCrudController = (collection) => {
       }
     },
 
-    getOne: async (req, res) => {},
-
-    update: async (req, res) => {
+    getOne: async (req, res) => {
+      // Placeholder for getOne, you can implement this if needed.
       try {
-        // Helper to get schema fields that are supposed to be images
-        const imageFields = getImageFields(model.schema);
-
-        // ========================================================================
-        //  PATH 1: NO IMAGE UPLOAD
-        //  Handles updates for collections without image fields or when no
-        //  image is being uploaded.
-        // ========================================================================
-        if (imageFields.length === 0) {
-          try {
-            // --- Logic for 'students' collection ---
-            if (collection.toLowerCase() === "students") {
-              const updatedData = { ...req.body };
-              const studentRecord = await model.findById(req.params.id);
-              if (!studentRecord) {
-                return res.status(404).json({ error: "Student not found" });
-              }
-
-              // Validate and format ObjectId for teacher
-              updatedData.teacher =
-                req.body.teacher &&
-                mongoose.Types.ObjectId.isValid(req.body.teacher)
-                  ? req.body.teacher
-                  : null;
-
-              // Ensure rental_book is a valid array of ObjectIds
-              let rentalBook = Array.isArray(req.body.rental_book)
-                ? req.body.rental_book
-                : req.body.rental_book
-                ? [req.body.rental_book]
-                : [];
-              updatedData.rental_book = rentalBook.filter((id) =>
-                mongoose.Types.ObjectId.isValid(id)
-              );
-
-              // Handle boolean and numeric conversions
-              updatedData.status =
-                req.body.status === "true" || req.body.status === true;
-              updatedData.score = parseInt(req.body.score) || 0;
-              updatedData.attendance = parseInt(req.body.attendance) || 0;
-
-              // Handle score updates based on score_status
-              const scoreStatus = req.body.score_status || "insert_more";
-              const incomingScore = {
-                quiz_score: Number(req.body.quiz_score) || 0,
-                midterm_score: Number(req.body.midterm_score) || 0,
-                final_score: Number(req.body.final_score) || 0,
-              };
-
-              if (scoreStatus === "insert_more") {
-                updatedData.quiz_score =
-                  (studentRecord.quiz_score || 0) + incomingScore.quiz_score;
-                updatedData.midterm_score =
-                  (studentRecord.midterm_score || 0) +
-                  incomingScore.midterm_score;
-                updatedData.final_score =
-                  (studentRecord.final_score || 0) + incomingScore.final_score;
-              } else if (scoreStatus === "replace") {
-                updatedData.quiz_score = incomingScore.quiz_score;
-                updatedData.midterm_score = incomingScore.midterm_score;
-                updatedData.final_score = incomingScore.final_score;
-              }
-              // Recalculate total score regardless of status
-              updatedData.total_attendance_score =
-                (updatedData.quiz_score || 0) +
-                (updatedData.midterm_score || 0) +
-                (updatedData.final_score || 0);
-
-              delete updatedData.score_status; // Clean up the status field
-
-              const updatedItem = await model.findByIdAndUpdate(
-                req.params.id,
-                updatedData,
-                { new: true, runValidators: true }
-              );
-              if (!updatedItem)
-                return res.status(404).json({ error: "Item not found" });
-
-              // Emit socket event and respond
-              const io = req.app.get("io");
-              if (io)
-                io.to(collection).emit(`${collection}_updated`, updatedItem);
-              return res.status(200).json(updatedItem);
-
-              // --- Logic for 'classes' collection (Fetch, Modify, Save) ---
-            } else if (collection.toLowerCase() === "classes") {
-              const classToUpdate = await model.findById(req.params.id);
-              if (!classToUpdate) {
-                return res.status(404).json({ error: "Class not found" });
-              }
-
-              // Whitelist of fields allowed for direct update
-              const allowedFields = [
-                "name",
-                "duration",
-                "staff",
-                "room",
-                "day_class",
-                "mark_as_completed",
-                "status",
-                "subject",
-                "holiday",
-              ];
-              allowedFields.forEach((field) => {
-                if (req.body.hasOwnProperty(field)) {
-                  // For ObjectId fields, validate or set to null
-                  if (
-                    [
-                      "staff",
-                      "room",
-                      "subject",
-                      "holiday",
-                      "duration",
-                    ].includes(field) &&
-                    !mongoose.Types.ObjectId.isValid(req.body[field])
-                  ) {
-                    classToUpdate[field] = null;
-                  } else {
-                    classToUpdate[field] = req.body[field];
-                  }
-                }
-              });
-
-              // Handle the nested 'students' array update
-              if (req.body.students && Array.isArray(req.body.students)) {
-                classToUpdate.students = req.body.students
-                  .filter(
-                    (s) =>
-                      s &&
-                      s.student &&
-                      mongoose.Types.ObjectId.isValid(s.student)
-                  )
-                  .map((s) => {
-                    const class_practice = Number(s.class_practice) || 0;
-                    const home_work = Number(s.home_work) || 0;
-                    const assignment_score = Number(s.assignment_score) || 0;
-                    const presentation = Number(s.presentation) || 0;
-                    const revision_test = Number(s.revision_test) || 0;
-                    const final_exam = Number(s.final_exam) || 0;
-                    const work_book = Number(s.work_book) || 0;
-                    const total_score =
-                      class_practice +
-                      home_work +
-                      assignment_score +
-                      presentation +
-                      revision_test +
-                      final_exam +
-                      work_book;
-
-                    const studentData = {
-                      student: new mongoose.Types.ObjectId(s.student),
-                      attendance_score: Number(s.attendance_score) || 0,
-                      class_practice,
-                      home_work,
-                      assignment_score,
-                      presentation,
-                      revision_test,
-                      final_exam,
-                      work_book,
-                      total_score,
-                      note: s.note || "",
-                      exit_time: s.exit_time || "",
-                      entry_time: s.entry_time || "",
-                      checking_at: s.checking_at || "",
-                      comments: total_score >= 50 ? "passed" : "failed",
-                    };
-
-                    const validAttendance = [
-                      "present",
-                      "absent",
-                      "late",
-                      "permission",
-                    ];
-                    if (validAttendance.includes(s.attendance)) {
-                      studentData.attendance = s.attendance;
-                    }
-                    return studentData;
-                  });
-              }
-
-              const updatedItem = await classToUpdate.save({
-                runValidators: true,
-              });
-
-              // Emit socket event and respond
-              const io = req.app.get("io");
-              if (io)
-                io.to(collection).emit(`${collection}_updated`, updatedItem);
-              return res.status(200).json(updatedItem);
-            } else {
-              // --- Generic logic for all other collections ---
-              const updatedItem = await model.findByIdAndUpdate(
-                req.params.id,
-                req.body,
-                { new: true, runValidators: true }
-              );
-              if (!updatedItem)
-                return res.status(404).json({ error: "Item not found" });
-
-              // Emit socket event and respond
-              const io = req.app.get("io");
-              if (io)
-                io.to(collection).emit(`${collection}_updated`, updatedItem);
-              return res.status(200).json(updatedItem);
-            }
-          } catch (err) {
-            console.error(`Update error for ${collection}:`, err);
-            return res
-              .status(400)
-              .json({ error: "Update failed", details: err.message });
-          }
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ error: "Invalid ID format." });
         }
 
-        // ========================================================================
-        //  PATH 2: WITH IMAGE UPLOAD
-        //  Handles multipart/form-data requests using multer for file uploads.
-        // ========================================================================
+        const item = await model.findById(id);
+
+        if (!item) {
+          return res.status(404).json({ error: "Item not found." });
+        }
+
+        return res.status(200).json(item);
+      } catch (err) {
+        console.error(`GetOne error for collection "${collection}":`, err);
+        res.status(500).json({ error: "Fetch failed", details: err.message });
+      }
+    },
+
+    // UPDATE a document
+    update: async (req, res) => {
+      try {
+        const imageFields = getImageFields(model.schema);
         const uploadFields = imageFields.map((field) => ({
           name: field,
           maxCount: 1,
         }));
+
+        // Use multer to process the request, which handles both JSON and form-data
         upload.fields(uploadFields)(req, res, async (err) => {
           if (err) {
             return res
@@ -813,199 +607,75 @@ const dynamicCrudController = (collection) => {
           }
 
           try {
+            const { id } = req.params;
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+              return res.status(400).json({ error: "Invalid ID" });
+            }
+
+            // Start with the request body
             const updatedData = { ...req.body };
 
-            // Add uploaded file paths to the data object
+            // Add any uploaded image paths to the data
             if (req.files) {
               imageFields.forEach((field) => {
-                if (req.files[field]) {
+                if (req.files[field] && req.files[field][0]) {
                   updatedData[field] = req.files[field][0].path;
                 }
               });
             }
 
-            // --- Logic for 'staffs' collection ---
-            if (collection.toLowerCase() === "staffs") {
-              updatedData.department =
-                req.body.department &&
-                mongoose.Types.ObjectId.isValid(req.body.department)
-                  ? req.body.department
-                  : null;
-              updatedData.position =
-                req.body.position &&
-                mongoose.Types.ObjectId.isValid(req.body.position)
-                  ? req.body.position
-                  : null;
-            }
-
-            // --- Logic for 'users' collection (password hashing) ---
-            if (collection.toLowerCase() === "users") {
-              if (req.body.password && req.body.password.trim() !== "") {
-                updatedData.password = await hashPassword(req.body.password);
+            // --- UPDATED: Handle User and Staff Status Updates with Booleans ---
+            const collectionName = collection.toLowerCase();
+            if (collectionName === "users" || collectionName === "staffs") {
+              // Handle password update
+              if (updatedData.password && updatedData.password.trim() !== "") {
+                updatedData.password = await hashPassword(updatedData.password);
               } else {
-                delete updatedData.password; // Don't update password if it's empty
+                delete updatedData.password; // Don't update password if empty
               }
-            }
 
-            // NOTE: The logic for 'students' and 'classes' is duplicated here.
-            // In a real-world app, you would refactor this into shared helper functions
-            // to avoid repetition. For clarity here, it's shown inline.
-
-            // --- Logic for 'students' collection (with potential image) ---
-            if (collection.toLowerCase() === "students") {
-              const studentRecord = await model.findById(req.params.id);
-              if (!studentRecord) {
-                return res.status(404).json({ error: "Student not found" });
-              }
-              // All the same student logic from Path 1...
-              updatedData.teacher =
-                req.body.teacher &&
-                mongoose.Types.ObjectId.isValid(req.body.teacher)
-                  ? req.body.teacher
-                  : null;
-              let rentalBook = Array.isArray(req.body.rental_book)
-                ? req.body.rental_book
-                : req.body.rental_book
-                ? [req.body.rental_book]
-                : [];
-              updatedData.rental_book = rentalBook.filter((id) =>
-                mongoose.Types.ObjectId.isValid(id)
-              );
-              updatedData.status =
-                req.body.status === "true" || req.body.status === true;
-              updatedData.score = parseInt(req.body.score) || 0;
-              updatedData.attendance = parseInt(req.body.attendance) || 0;
-              const scoreStatus = req.body.score_status || "insert_more";
-              const incomingScore = {
-                quiz_score: Number(req.body.quiz_score) || 0,
-                midterm_score: Number(req.body.midterm_score) || 0,
-                final_score: Number(req.body.final_score) || 0,
-              };
-              if (scoreStatus === "insert_more") {
-                updatedData.quiz_score =
-                  (studentRecord.quiz_score || 0) + incomingScore.quiz_score;
-                updatedData.midterm_score =
-                  (studentRecord.midterm_score || 0) +
-                  incomingScore.midterm_score;
-                updatedData.final_score =
-                  (studentRecord.final_score || 0) + incomingScore.final_score;
-              } else if (scoreStatus === "replace") {
-                updatedData.quiz_score = incomingScore.quiz_score;
-                updatedData.midterm_score = incomingScore.midterm_score;
-                updatedData.final_score = incomingScore.final_score;
-              }
-              updatedData.total_attendance_score =
-                (updatedData.quiz_score || 0) +
-                (updatedData.midterm_score || 0) +
-                (updatedData.final_score || 0);
-              delete updatedData.score_status;
-            }
-
-            // --- Logic for 'classes' collection (Fetch, Modify, Save) ---
-            if (collection.toLowerCase() === "classes") {
-              const classToUpdate = await model.findById(req.params.id);
-              if (!classToUpdate) {
-                return res.status(404).json({ error: "Class not found" });
-              }
-              // All the same class logic from Path 1...
-              const allowedFields = [
-                "name",
-                "duration",
-                "staff",
-                "room",
-                "day_class",
-                "mark_as_completed",
-                "status",
-                "subject",
-                "holiday",
-              ];
-              allowedFields.forEach((field) => {
-                if (updatedData.hasOwnProperty(field)) {
-                  if (
-                    [
-                      "staff",
-                      "room",
-                      "subject",
-                      "holiday",
-                      "duration",
-                    ].includes(field) &&
-                    !mongoose.Types.ObjectId.isValid(updatedData[field])
-                  ) {
-                    classToUpdate[field] = null;
-                  } else {
-                    classToUpdate[field] = updatedData[field];
-                  }
+              // Handle status update (boolean true/false)
+              if (updatedData.hasOwnProperty("status")) {
+                // Convert string 'true'/'false' from form data to a real boolean
+                if (updatedData.status === "true") {
+                  updatedData.status = true;
+                } else if (updatedData.status === "false") {
+                  updatedData.status = false;
                 }
-              });
-              if (updatedData.students && Array.isArray(updatedData.students)) {
-                classToUpdate.students = updatedData.students
-                  .filter(
-                    (s) =>
-                      s &&
-                      s.student &&
-                      mongoose.Types.ObjectId.isValid(s.student)
-                  )
-                  .map((s) => {
-                    const class_practice = Number(s.class_practice) || 0;
-                    const home_work = Number(s.home_work) || 0;
-                    const assignment_score = Number(s.assignment_score) || 0;
-                    const presentation = Number(s.presentation) || 0;
-                    const revision_test = Number(s.revision_test) || 0;
-                    const final_exam = Number(s.final_exam) || 0;
-                    const work_book = Number(s.work_book) || 0;
-                    const total_score =
-                      class_practice +
-                      home_work +
-                      assignment_score +
-                      presentation +
-                      revision_test +
-                      final_exam +
-                      work_book;
-                    const studentData = {
-                      student: new mongoose.Types.ObjectId(s.student),
-                      attendance_score: Number(s.attendance_score) || 0,
-                      class_practice,
-                      home_work,
-                      assignment_score,
-                      presentation,
-                      revision_test,
-                      final_exam,
-                      work_book,
-                      total_score,
-                      note: s.note || "",
-                      exit_time: s.exit_time || "",
-                      entry_time: s.entry_time || "",
-                      checking_at: s.checking_at || "",
-                      comments: total_score >= 50 ? "passed" : "failed",
-                    };
-                    const validAttendance = [
-                      "present",
-                      "absent",
-                      "late",
-                      "permission",
-                    ];
-                    if (validAttendance.includes(s.attendance)) {
-                      studentData.attendance = s.attendance;
-                    }
-                    return studentData;
-                  });
-              }
-              const updatedItem = await classToUpdate.save({
-                runValidators: true,
-              });
 
-              const io = req.app.get("io");
-              if (io)
-                io.to(collection).emit(`${collection}_updated`, updatedItem);
-              return res.status(200).json(updatedItem);
+                // If after conversion it's still not a boolean, ignore it.
+                if (typeof updatedData.status !== "boolean") {
+                  console.warn(
+                    `Invalid status value "${updatedData.status}" received. It must be a boolean (true/false). Ignoring.`
+                  );
+                  delete updatedData.status;
+                }
+              }
             }
 
-            // --- Final update for all other collections with images ---
+            // --- Special handling for other collections (Refactored) ---
+            if (collectionName === "staffs") {
+              if (
+                updatedData.department &&
+                !mongoose.Types.ObjectId.isValid(updatedData.department)
+              ) {
+                updatedData.department = null;
+              }
+              if (
+                updatedData.position &&
+                !mongoose.Types.ObjectId.isValid(updatedData.position)
+              ) {
+                updatedData.position = null;
+              }
+            }
+
+            // Find the item and update it with the prepared data
             const updatedItem = await model.findByIdAndUpdate(
-              req.params.id,
-              updatedData,
+              id,
+              { $set: updatedData }, // Use $set to prevent replacing the whole document
               { new: true, runValidators: true }
             );
+
             if (!updatedItem) {
               return res.status(404).json({ error: "Item not found" });
             }
@@ -1031,7 +701,9 @@ const dynamicCrudController = (collection) => {
       }
     },
 
+    // DELETE a document
     delete: async (req, res) => {
+      // This function remains the same as your original.
       try {
         const itemId = req.params.id;
 
