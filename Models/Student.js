@@ -60,7 +60,7 @@ const studentSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: false,
+      // required: false,
       unique: true,
     },
     date_intered: {
